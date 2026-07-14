@@ -6,37 +6,54 @@
 
 @layer base {
   :root {
-    --background: 230 25% 5%;
-    --background-soft: 230 22% 7%;
-    --foreground: 210 40% 98%;
-    --card: 230 20% 7%;
-    --card-foreground: 210 40% 98%;
-    --popover: 230 22% 8%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 199 89% 60%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 230 18% 12%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 230 18% 13%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 199 89% 60%;
-    --accent-foreground: 210 40% 98%;
+    /* Light theme (3-color system: Cream base, Charcoal text/borders, Lavender accents) */
+    --background: 36 25% 97%;          /* Cream #faf8f5 */
+    --background-soft: 36 20% 95%;     /* Cream soft */
+    --foreground: 240 6% 10%;          /* Charcoal #18181b */
+    --card: 36 25% 97%;
+    --card-foreground: 240 6% 10%;
+    --popover: 36 25% 97%;
+    --popover-foreground: 240 6% 10%;
+    --primary: 268 62% 92%;            /* Lavender #e9dcf8 */
+    --primary-foreground: 240 6% 10%;   /* Charcoal text on Lavender */
+    --secondary: 36 20% 92%;
+    --secondary-foreground: 240 6% 10%;
+    --muted: 36 15% 90%;
+    --muted-foreground: 240 6% 40%;
+    --accent: 268 62% 92%;
+    --accent-foreground: 240 6% 10%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
-    --border: 230 18% 16%;
-    --input: 230 18% 16%;
-    --ring: 199 89% 60%;
+    --border: 240 6% 10%;              /* Charcoal borders */
+    --input: 240 6% 10%;
+    --ring: 240 6% 10%;
     --radius: 0.75rem;
-
-    --chart-1: 199 89% 60%;
-    --chart-2: 160 60% 50%;
-    --chart-3: 43 90% 65%;
-    --chart-4: 280 70% 65%;
-    --chart-5: 340 80% 65%;
 
     --font-sans: 'Inter', system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
     --font-serif: 'Instrument Serif', serif;
+  }
+
+  .dark {
+    /* Dark theme (3-color system inverted: Charcoal base, Cream text/borders, Lavender accents) */
+    --background: 240 6% 10%;          /* Charcoal #18181b */
+    --background-soft: 240 6% 7%;      /* Charcoal soft */
+    --foreground: 36 25% 97%;          /* Cream #faf8f5 */
+    --card: 240 6% 10%;
+    --card-foreground: 36 25% 97%;
+    --popover: 240 6% 8%;
+    --popover-foreground: 36 25% 97%;
+    --primary: 268 62% 92%;            /* Lavender #e9dcf8 */
+    --primary-foreground: 240 6% 10%;   /* Charcoal text on Lavender */
+    --secondary: 240 6% 15%;
+    --secondary-foreground: 36 25% 97%;
+    --muted: 240 6% 15%;
+    --muted-foreground: 36 15% 75%;
+    --accent: 268 62% 92%;
+    --accent-foreground: 240 6% 10%;
+    --border: 240 6% 20%;              /* Subdued Charcoal border for dark mode */
+    --input: 240 6% 20%;
+    --ring: 268 62% 92%;
   }
 }
 
@@ -46,6 +63,7 @@
   }
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
   body {
     @apply bg-background text-foreground;
@@ -53,137 +71,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    overflow-x: hidden;
+    width: 100vw;
   }
-}
-
-@layer utilities {
-  .font-mono {
-    font-family: var(--font-mono);
-  font-feature-settings: normal;
-  }
-  .font-serif {
-    font-family: var(--font-serif);
-  }
-
-  .glass {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  .glass-strong {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .text-gradient {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(var(--foreground)) 0%, hsl(var(--muted-foreground)) 100%);
-  }
-
-  .text-gradient-brand {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #5eead4 0%, #38bdf8 50%, #818cf8 100%);
-  }
-
-  .bg-grid {
-    background-image:
-      linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-    background-size: 48px 48px;
-  }
-
-  .bg-dots {
-    background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-    background-size: 24px 24px;
-  }
-
-  .shadow-glow {
-    box-shadow: 0 0 40px -10px hsl(var(--primary) / 0.3);
-  }
-
-  .shadow-glow-sm {
-    box-shadow: 0 0 24px -8px hsl(var(--primary) / 0.25);
-  }
-
-  .mask-fade-b {
-    mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-  }
-
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  .thin-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  .thin-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .thin-scrollbar::-webkit-scrollbar-thumb {
-    background: hsl(var(--border));
-    border-radius: 3px;
-  }
-  .thin-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.5);
-  }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-12px); }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-@keyframes gradient-x {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-@keyframes scroll-x {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-.animate-pulse-glow {
-  animation: pulse-glow 4s ease-in-out infinite;
-}
-.animate-gradient-x {
-  background-size: 200% 200%;
-  animation: gradient-x 8s ease infinite;
-}
-.animate-scroll-x {
-  animation: scroll-x 40s linear infinite;
-}
-
-.shimmer {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.06) 50%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 2.5s infinite;
 }

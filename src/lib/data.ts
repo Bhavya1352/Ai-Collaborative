@@ -102,6 +102,8 @@ export interface FileNode {
   children?: FileNode[];
   active?: boolean;
   modified?: boolean;
+  path?: string;
+  fileId?: string;
 }
 
 export const fileTree: FileNode[] = [

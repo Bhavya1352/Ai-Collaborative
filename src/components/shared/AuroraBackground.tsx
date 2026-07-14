@@ -3,13 +3,13 @@ import { motion } from 'framer-motion';
 export function AuroraBackground() {
   return (
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      {/* Base gradient */}
+      {}
       <div className="absolute inset-0 bg-background" />
 
-      {/* Grid */}
+      {}
       <div className="absolute inset-0 bg-grid mask-fade-b opacity-40" />
 
-      {/* Aurora blobs */}
+      {}
       <motion.div
         className="absolute -top-40 left-1/4 h-[36rem] w-[36rem] rounded-full blur-[120px]"
         style={{ background: 'radial-gradient(circle, rgba(56,189,248,0.18), transparent 70%)' }}
@@ -29,13 +29,13 @@ export function AuroraBackground() {
         transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      {/* Top glow */}
+      {}
       <div
         className="absolute inset-x-0 top-0 h-px"
         style={{ background: 'linear-gradient(90deg, transparent, rgba(56,189,248,0.5), transparent)' }}
       />
 
-      {/* Noise overlay */}
+      {}
       <div
         className="absolute inset-0 opacity-[0.015] mix-blend-overlay"
         style={{
