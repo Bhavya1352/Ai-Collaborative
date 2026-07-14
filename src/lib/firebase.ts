@@ -11,6 +11,19 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || 'YOUR_APP_ID',
 };
 
+// Diagnostic logs to help debug firebase key/config loading issues
+if (
+  firebaseConfig.apiKey === 'YOUR_API_KEY' || 
+  !import.meta.env.VITE_FIREBASE_API_KEY
+) {
+  console.error(
+    "⚠️ Firebase configuration error: VITE_FIREBASE_API_KEY is not defined or is using the default placeholder 'YOUR_API_KEY'.\n" +
+    "If you just created or edited your '.env' file, please RESTART your Vite development server (press Ctrl+C and run 'npm run dev' again) so the new environment variables can be loaded."
+  );
+} else {
+  console.log("Firebase initialized with API key: ", firebaseConfig.apiKey.substring(0, 8) + "...");
+}
+
 let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
