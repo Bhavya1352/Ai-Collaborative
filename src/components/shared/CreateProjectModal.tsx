@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { firestoreService, type Project } from '@/services/firestore';
 import { useAuth } from '@/contexts/AuthContext';
+import { Timestamp } from 'firebase/firestore';
 
 interface CreateProjectModalProps {
   open: boolean;
@@ -89,16 +90,27 @@ export function CreateProjectModal({ open, onOpenChange, onProjectCreated }: Cre
         modified: false
       });
 
-      const project = await firestoreService.getProject(projectId);
-      if (project) {
-        onProjectCreated?.(project);
-        onOpenChange(false);
-        
-        setName('');
-        setDescription('');
-        setLanguage('TypeScript');
-        setColor(colors[0]);
-      }
+      // Build a local Project object immediately (avoids null serverTimestamp from Firestore)
+      const nowTimestamp = Timestamp.fromDate(new Date());
+      const localProject: Project = {
+        id: projectId,
+        name,
+        description,
+        language,
+        color,
+        userId,
+        branch: 'main',
+        collaborators: 1,
+        progress: 0,
+        createdAt: nowTimestamp,
+        updatedAt: nowTimestamp,
+      };
+      onProjectCreated?.(localProject);
+      onOpenChange(false);
+      setName('');
+      setDescription('');
+      setLanguage('TypeScript');
+      setColor(colors[0]);
     } catch (error) {
       console.error('Failed to create project:', error);
     } finally {

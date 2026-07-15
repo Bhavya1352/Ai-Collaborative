@@ -380,7 +380,7 @@ function ProjectCard({ project, onNavigate, onDelete, onRename, index }: { proje
       <div className="flex items-center justify-between pt-3 border-t border-white/5">
         <span className="text-[9px] font-mono text-zinc-500 flex items-center gap-1">
           <Clock className="h-2.5 w-2.5" />
-          {new Date(project.updatedAt.toDate()).toLocaleDateString()}
+          {project.updatedAt?.toDate ? new Date(project.updatedAt.toDate()).toLocaleDateString() : 'Just now'}
         </span>
         <div className="flex -space-x-1.5">
           {Array.from({ length: Math.min(project.collaborators, 3) }).map((_, i) => (
@@ -567,8 +567,8 @@ export function Dashboard({ onNavigate, onCommand }: { onNavigate: (screen: Scre
   }, [user]);
 
   const handleProjectCreated = (project: Project) => {
-    setProjects((prev) => [project, ...prev]);
-    
+    // Don't manually update state — subscribeToProjects will auto-update the list.
+    // Just navigate to the editor with the new project.
     onNavigate('editor', project.id);
   };
 

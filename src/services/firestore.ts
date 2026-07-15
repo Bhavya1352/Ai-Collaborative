@@ -96,7 +96,9 @@ export const firestoreService = {
       orderBy('updatedAt', 'desc')
     );
     return onSnapshot(q, (snapshot) => {
-      const projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
+      const projects = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() } as Project))
+        .filter(p => p.updatedAt != null); // Filter out docs with pending serverTimestamp
       callback(projects);
     });
   },
