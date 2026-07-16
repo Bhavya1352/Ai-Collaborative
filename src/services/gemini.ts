@@ -85,5 +85,70 @@ export const geminiService = {
     } catch (error: any) {
       return { text: '', error: error.message || 'Failed to get response' };
     }
-  }
+  },
+
+  // 🔥 STREAMING CHAT — delivers tokens word-by-word like ChatGPT
+  async streamChat(
+    message: string,
+    history: Array<{ role: string; content: string }> = [],
+    onChunk: (text: string) => void,
+    onDone?: () => void,
+    onError?: (err: string) => void
+  ): Promise<void> {
+    try {
+      const chat = model.startChat({
+        history: history.map(msg => ({
+          role: msg.role === 'user' ? 'user' : 'model',
+          parts: [{ text: msg.content }]
+        })),
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2048,
+        },
+      });
+
+      const result = await chat.sendMessageStream(message);
+
+      for await (const chunk of result.stream) {
+        const text = chunk.text();
+        if (text) onChunk(text);
+      }
+
+      onDone?.();
+    } catch (error: any) {
+      onError?.(error.message || 'Streaming failed');
+    }
+  },
+
+  // 🔥 STREAMING CODE EXPLANATION — for editor AI sidebar
+  async streamExplainCode(
+    code: string,
+    language: string,
+    onChunk: (text: string) => void,
+    onDone?: () => void,
+    onError?: (err: string) => void
+  ): Promise<void> {
+    try {
+      const prompt = `You are a senior developer. Explain this ${language} code clearly and helpfully. Cover:
+- What it does (1-2 sentences)
+- Key logic and patterns
+- Potential improvements or issues
+
+\`\`\`${language}
+${code}
+\`\`\``;
+
+      const result = await model.generateContentStream(prompt);
+
+      for await (const chunk of result.stream) {
+        const text = chunk.text();
+        if (text) onChunk(text);
+      }
+
+      onDone?.();
+    } catch (error: any) {
+      onError?.(error.message || 'Streaming failed');
+    }
+  },
 };
+
