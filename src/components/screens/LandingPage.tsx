@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import type { Screen } from '@/lib/data';
 import {
   Sparkles,
@@ -9,12 +9,6 @@ import {
   RefreshCw,
   FileCode,
   ArrowRight,
-  Github,
-  Zap,
-  Globe,
-  Terminal,
-  Code2,
-  Brain,
 } from 'lucide-react';
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -401,74 +395,6 @@ function KeyFeatures() {
   );
 }
 
-// HOW IT WORKS - 3 SIMPLE STEPS
-function HowItWorks() {
-  const steps = [
-    {
-      number: '01',
-      title: 'Create in One Click',
-      desc: 'Press "Launch Free Workspace" to immediately start a sandbox project inside your browser. No complex terminals or setup required.',
-      badge: 'Quick Setup'
-    },
-    {
-      number: '02',
-      title: 'Invite Friends to Sync',
-      desc: 'Copy and share your private workspace URL. Edit code together live with real-time cursor tracking and lag-free file merges.',
-      badge: 'Live Share'
-    },
-    {
-      number: '03',
-      title: 'Ask the AI Partner',
-      desc: 'Use the integrated AI assistant sidebar to review code templates, explain difficult loops, or write refactored methods instantly.',
-      badge: 'AI Powered'
-    }
-  ];
-
-  return (
-    <section id="how-it-works" className="bg-[#faf8f5] border-t-2 border-[#18181b] px-4 sm:px-6 lg:px-8 py-20">
-      <div className="mx-auto max-w-5xl space-y-12">
-        <div className="max-w-2xl text-left space-y-4">
-          <span className="text-xs font-mono font-bold text-[#18181b] uppercase tracking-widest border-2 border-[#18181b] px-3 py-1.5 bg-[#e9dcf8] rounded-full inline-block shadow-[2px_2px_0px_0px_#18181b]">
-            🚀 How it works
-          </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-[#18181b] tracking-tight font-serif">
-            Coding made simple in 3 steps
-          </h2>
-          <p className="text-xs sm:text-sm md:text-base font-mono text-zinc-600 leading-relaxed font-semibold">
-            Lumen makes it incredibly easy to start, share, and build software. Here is how you can use it today:
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {steps.map((s, idx) => (
-            <div
-              key={idx}
-              className="bg-white border-2 border-[#18181b] rounded-2xl p-6 flex flex-col justify-between shadow-[4px_4px_0px_0px_#18181b] relative overflow-hidden"
-            >
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-serif italic text-4xl text-[#18181b] font-bold opacity-30">
-                    {s.number}
-                  </span>
-                  <span className="text-[9px] text-[#18181b] font-mono font-bold border-2 border-[#18181b] px-2 py-0.5 rounded-full bg-[#e9dcf8]">
-                    {s.badge}
-                  </span>
-                </div>
-                <h3 className="font-serif font-bold text-xl text-[#18181b]">
-                  {s.title}
-                </h3>
-                <p className="text-xs text-zinc-600 font-mono leading-relaxed">
-                  {s.desc}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 // RESUME DESCRIPTION CALLOUT
 function ResumeCallout({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   return (
@@ -503,185 +429,13 @@ function Footer() {
   );
 }
 
-// ANIMATED STATS COUNTER SECTION
-function useCountUp(target: number, duration = 2000, start = false) {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    if (!start) return;
-    let startTime: number | null = null;
-    const step = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const progress = Math.min((timestamp - startTime) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-      setCount(Math.floor(eased * target));
-      if (progress < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }, [target, duration, start]);
-  return count;
-}
-
-function StatCard({ value, suffix, label, delay }: { value: number; suffix: string; label: string; delay: number }) {
-  const [visible, setVisible] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const count = useCountUp(value, 2000, visible);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
-      { threshold: 0.3 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, delay, ease }}
-      className="text-center"
-    >
-      <div className="text-4xl sm:text-5xl md:text-6xl font-light font-serif text-[#18181b] tracking-tight">
-        {count.toLocaleString()}{suffix}
-      </div>
-      <div className="mt-2 text-xs font-mono text-zinc-500 uppercase tracking-widest">{label}</div>
-    </motion.div>
-  );
-}
-
-function StatsSection() {
-  return (
-    <section className="bg-[#18181b] border-t-2 border-[#18181b] px-4 sm:px-6 lg:px-8 py-20">
-      <div className="mx-auto max-w-5xl">
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
-        >
-          <span className="text-xs font-mono font-bold text-[#e9dcf8] uppercase tracking-widest border border-[#e9dcf8]/20 px-3 py-1.5 bg-[#e9dcf8]/10 rounded-full inline-block">
-            📊 Platform Stats
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-light text-[#faf8f5] font-serif mt-4">
-            Built for real developers
-          </h2>
-        </motion.div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
-          <StatCard value={1200} suffix="+" label="Active users" delay={0} />
-          <StatCard value={8400} suffix="+" label="Projects created" delay={0.1} />
-          <StatCard value={847000} suffix="+" label="Lines executed" delay={0.2} />
-          <StatCard value={52} suffix="+" label="Languages supported" delay={0.3} />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// TECH STACK / POWERED BY SECTION
-function TechStackSection() {
-  const stack = [
-    {
-      icon: Brain,
-      name: 'Google Gemini AI',
-      desc: 'Streaming AI responses, code explanation, refactoring & review',
-      color: '#4285F4',
-      badge: 'AI Integration',
-    },
-    {
-      icon: Globe,
-      name: 'Firebase',
-      desc: 'Auth, Firestore real-time DB, and Google OAuth provider',
-      color: '#FFCA28',
-      badge: 'Backend',
-    },
-    {
-      icon: Terminal,
-      name: 'Piston API',
-      desc: 'Live code execution engine — run 50+ languages in the browser',
-      color: '#10b981',
-      badge: 'Execution Engine',
-    },
-    {
-      icon: Github,
-      name: 'GitHub API',
-      desc: 'Real-time trending repos, search, stars and language data',
-      color: '#fff',
-      badge: 'Data Integration',
-    },
-    {
-      icon: Code2,
-      name: 'React + TypeScript',
-      desc: 'Fully typed components with Vite, Framer Motion & shadcn/ui',
-      color: '#61dafb',
-      badge: 'Frontend',
-    },
-    {
-      icon: Zap,
-      name: 'WebSockets',
-      desc: 'Real-time collaborative editing with cursor tracking',
-      color: '#fbbf24',
-      badge: 'Real-Time',
-    },
-  ];
-
-  return (
-    <section className="bg-[#faf8f5] border-t-2 border-[#18181b] px-4 sm:px-6 lg:px-8 py-20">
-      <div className="mx-auto max-w-5xl space-y-12">
-        <div className="text-center space-y-3">
-          <span className="text-xs font-mono font-bold text-[#18181b] uppercase tracking-widest border-2 border-[#18181b] px-3 py-1.5 bg-[#e9dcf8] rounded-full inline-block shadow-[2px_2px_0px_0px_#18181b]">
-            ⚡ Tech Stack
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-light text-[#18181b] font-serif">
-            Powered by real APIs
-          </h2>
-          <p className="text-xs sm:text-sm font-mono text-zinc-500 max-w-lg mx-auto">
-            Not a mock app — every feature uses production-grade APIs and real-time data.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {stack.map((item, i) => (
-            <motion.div
-              key={item.name}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.08, ease }}
-              className="bg-white border-2 border-[#18181b] p-5 rounded-2xl shadow-[3px_3px_0px_0px_#18181b] hover:shadow-[5px_5px_0px_0px_#18181b] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all group"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div
-                  className="h-9 w-9 rounded-xl flex items-center justify-center border-2 border-[#18181b]"
-                  style={{ background: `${item.color}20` }}
-                >
-                  <item.icon className="h-4 w-4" style={{ color: item.color }} />
-                </div>
-                <span className="text-[9px] font-mono font-bold text-zinc-500 border border-zinc-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  {item.badge}
-                </span>
-              </div>
-              <h3 className="font-serif font-bold text-base text-[#18181b]">{item.name}</h3>
-              <p className="text-[11px] font-mono text-zinc-500 mt-1.5 leading-relaxed">{item.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export function LandingPage({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   return (
     <div className="relative bg-[#faf8f5] text-[#18181b] min-h-screen selection:bg-[#e9dcf8]/70 select-none pb-0">
       <Nav onNavigate={onNavigate} />
       <Hero onNavigate={onNavigate} />
       <EditorSimulator />
-      <StatsSection />
       <KeyFeatures />
-      <TechStackSection />
-      <HowItWorks />
       <ResumeCallout onNavigate={onNavigate} />
       <Footer />
     </div>
