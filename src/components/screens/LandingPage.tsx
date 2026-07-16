@@ -1,7 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
-import { AuthModal } from '@/components/shared/AuthModal';
-import { useAuth } from '@/contexts/AuthContext';
 import type { Screen } from '@/lib/data';
 import {
   Sparkles,
@@ -74,17 +72,7 @@ const fileSnippets = {
 };
 
 function Nav({ onNavigate }: { onNavigate: (s: Screen) => void }) {
-  const [authOpen, setAuthOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user } = useAuth();
-
-  const handleAuthClick = () => {
-    if (user) {
-      onNavigate('dashboard');
-    } else {
-      setAuthOpen(true);
-    }
-  };
 
   return (
     <>
@@ -123,7 +111,7 @@ function Nav({ onNavigate }: { onNavigate: (s: Screen) => void }) {
           <div className="hidden lg:flex items-center gap-4">
             <button
               className="px-4 py-2 bg-[#e9dcf8] text-[#18181b] border-2 border-[#18181b] shadow-[2px_2px_0px_0px_#18181b] hover:shadow-[4px_4px_0px_0px_#18181b] hover:-translate-x-0.5 hover:-translate-y-0.5 text-xs font-mono font-bold rounded-lg transition-all"
-              onClick={handleAuthClick}
+              onClick={() => onNavigate('dashboard')}
             >
               Open Workspace
             </button>
@@ -148,34 +136,13 @@ function Nav({ onNavigate }: { onNavigate: (s: Screen) => void }) {
               exit={{ opacity: 0, y: -8 }}
               className="absolute top-18 left-4 right-4 bg-[#faf8f5] border-2 border-[#18181b] shadow-[4px_4px_0px_0px_#18181b] rounded-xl p-5 flex flex-col gap-4 z-40"
             >
-              <a
-                href="#demo"
-                onClick={() => setMobileMenuOpen(false)}
-                className="font-mono text-xs font-bold uppercase tracking-wider text-[#18181b] hover:underline underline-offset-4 decoration-2"
-              >
-                TRY DEMO
-              </a>
-              <a
-                href="#features"
-                onClick={() => setMobileMenuOpen(false)}
-                className="font-mono text-xs font-bold uppercase tracking-wider text-[#18181b] hover:underline underline-offset-4 decoration-2"
-              >
-                FEATURES
-              </a>
-              <a
-                href="#how-it-works"
-                onClick={() => setMobileMenuOpen(false)}
-                className="font-mono text-xs font-bold uppercase tracking-wider text-[#18181b] hover:underline underline-offset-4 decoration-2"
-              >
-                HOW IT WORKS
-              </a>
+              <a href="#demo" onClick={() => setMobileMenuOpen(false)} className="font-mono text-xs font-bold uppercase tracking-wider text-[#18181b] hover:underline underline-offset-4 decoration-2">TRY DEMO</a>
+              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="font-mono text-xs font-bold uppercase tracking-wider text-[#18181b] hover:underline underline-offset-4 decoration-2">FEATURES</a>
+              <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="font-mono text-xs font-bold uppercase tracking-wider text-[#18181b] hover:underline underline-offset-4 decoration-2">HOW IT WORKS</a>
               <div className="flex flex-col gap-2 pt-2 border-t-2 border-[#18181b]/10">
                 <button
                   className="w-full py-2 bg-[#e9dcf8] text-[#18181b] border-2 border-[#18181b] shadow-[2px_2px_0px_0px_#18181b] rounded-lg font-mono text-xs font-bold"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    handleAuthClick();
-                  }}
+                  onClick={() => { setMobileMenuOpen(false); onNavigate('dashboard'); }}
                 >
                   Open Workspace
                 </button>
@@ -184,10 +151,10 @@ function Nav({ onNavigate }: { onNavigate: (s: Screen) => void }) {
           )}
         </AnimatePresence>
       </motion.header>
-      <AuthModal open={authOpen} onOpenChange={setAuthOpen} />
     </>
   );
 }
+
 
 function Hero({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   return (
