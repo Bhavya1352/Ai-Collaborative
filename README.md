@@ -33,6 +33,3 @@ npm run dev
 ```
 
 Create a `.env` file and add your Firebase and Gemini API keys before running the project.
-
-MIT
-
