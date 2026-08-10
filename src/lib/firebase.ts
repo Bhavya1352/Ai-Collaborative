@@ -11,31 +11,36 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || 'YOUR_APP_ID',
 };
 
-// Diagnostic logs to help debug firebase key/config loading issues
 if (
-  firebaseConfig.apiKey === 'YOUR_API_KEY' || 
+  firebaseConfig.apiKey === 'YOUR_API_KEY' ||
   !import.meta.env.VITE_FIREBASE_API_KEY
 ) {
   console.error(
-    "⚠️ Firebase configuration error: VITE_FIREBASE_API_KEY is not defined or is using the default placeholder 'YOUR_API_KEY'.\n" +
-    "If you just created or edited your '.env' file, please RESTART your Vite development server (press Ctrl+C and run 'npm run dev' again) so the new environment variables can be loaded."
+    "[Firebase] ERROR: VITE_FIREBASE_API_KEY is missing or placeholder. Restart Vite after editing .env"
   );
 } else {
-  console.log("Firebase initialized with API key: ", firebaseConfig.apiKey.substring(0, 8) + "...");
+  console.log('[Firebase] Initializing with projectId:', firebaseConfig.projectId, '| apiKey prefix:', firebaseConfig.apiKey.substring(0, 8) + '...');
 }
 
 let app: FirebaseApp;
-let auth: Auth;
+let _auth: Auth | null = null;
 let db: Firestore;
 
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
   db = getFirestore(app);
 } else {
   app = getApps()[0];
-  auth = getAuth(app);
   db = getFirestore(app);
 }
 
-export { app, auth, db };
+// Lazy initialize Auth only when explicitly requested
+export const getFirebaseAuth = (): Auth => {
+  if (!_auth) {
+    console.log('[Firebase] Lazy initializing Auth on explicit request');
+    _auth = getAuth(app);
+  }
+  return _auth;
+};
+
+export { app, db };

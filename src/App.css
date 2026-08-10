@@ -1,15 +1,15 @@
 .glass {
-  background: rgba(255, 255, 255, 0.03);
+  background: hsl(var(--card));
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid hsl(var(--border) / 0.4);
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.05);
+  background: hsl(var(--card));
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid hsl(var(--border) / 0.5);
 }
 
 .text-gradient {

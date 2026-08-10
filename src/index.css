@@ -6,54 +6,32 @@
 
 @layer base {
   :root {
-    /* Light theme (3-color system: Cream base, Charcoal text/borders, Lavender accents) */
-    --background: 36 25% 97%;          /* Cream #faf8f5 */
-    --background-soft: 36 20% 95%;     /* Cream soft */
-    --foreground: 240 6% 10%;          /* Charcoal #18181b */
-    --card: 36 25% 97%;
-    --card-foreground: 240 6% 10%;
-    --popover: 36 25% 97%;
-    --popover-foreground: 240 6% 10%;
-    --primary: 268 62% 92%;            /* Lavender #e9dcf8 */
-    --primary-foreground: 240 6% 10%;   /* Charcoal text on Lavender */
-    --secondary: 36 20% 92%;
-    --secondary-foreground: 240 6% 10%;
-    --muted: 36 15% 90%;
-    --muted-foreground: 240 6% 40%;
-    --accent: 268 62% 92%;
-    --accent-foreground: 240 6% 10%;
-    --destructive: 0 72% 51%;
+    /* Warm Light Theme - Premium Workspace - Enhanced Visibility */
+    --background: 40 20% 97%;          /* Warm ivory #faf8f5 */
+    --background-soft: 40 15% 94%;     /* Soft ivory */
+    --foreground: 240 15% 8%;           /* Darker charcoal #141416 - better contrast */
+    --card: 40 20% 98%;                 /* Slightly warmer card background */
+    --card-foreground: 240 15% 8%;
+    --popover: 40 20% 98%;
+    --popover-foreground: 240 15% 8%;
+    --primary: 268 60% 85%;            /* Darker lavender #d8d0e8 - better contrast */
+    --primary-foreground: 240 15% 8%;  /* Darker text on lavender */
+    --secondary: 40 15% 92%;
+    --secondary-foreground: 240 15% 8%;
+    --muted: 40 10% 88%;
+    --muted-foreground: 240 10% 25%;  /* Much darker muted text - better readability */
+    --accent: 268 60% 85%;
+    --accent-foreground: 240 15% 8%;
+    --destructive: 0 70% 55%;
     --destructive-foreground: 210 40% 98%;
-    --border: 240 6% 10%;              /* Charcoal borders */
-    --input: 240 6% 10%;
-    --ring: 240 6% 10%;
+    --border: 240 8% 80%;               /* Slightly darker borders for visibility */
+    --input: 240 8% 80%;
+    --ring: 268 60% 85%;
     --radius: 0.75rem;
 
     --font-sans: 'Inter', system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
     --font-serif: 'Instrument Serif', serif;
-  }
-
-  .dark {
-    /* Dark theme (3-color system inverted: Charcoal base, Cream text/borders, Lavender accents) */
-    --background: 240 6% 10%;          /* Charcoal #18181b */
-    --background-soft: 240 6% 7%;      /* Charcoal soft */
-    --foreground: 36 25% 97%;          /* Cream #faf8f5 */
-    --card: 240 6% 10%;
-    --card-foreground: 36 25% 97%;
-    --popover: 240 6% 8%;
-    --popover-foreground: 36 25% 97%;
-    --primary: 268 62% 92%;            /* Lavender #e9dcf8 */
-    --primary-foreground: 240 6% 10%;   /* Charcoal text on Lavender */
-    --secondary: 240 6% 15%;
-    --secondary-foreground: 36 25% 97%;
-    --muted: 240 6% 15%;
-    --muted-foreground: 36 15% 75%;
-    --accent: 268 62% 92%;
-    --accent-foreground: 240 6% 10%;
-    --border: 240 6% 20%;              /* Subdued Charcoal border for dark mode */
-    --input: 240 6% 20%;
-    --ring: 268 62% 92%;
   }
 }
 

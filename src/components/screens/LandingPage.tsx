@@ -5,10 +5,8 @@ import {
   Sparkles,
   Menu,
   X,
-  Users,
   RefreshCw,
   FileCode,
-  ArrowRight,
 } from 'lucide-react';
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -81,10 +79,10 @@ function Nav({ onNavigate }: { onNavigate: (s: Screen) => void }) {
             className="flex items-center gap-2 cursor-pointer"
             onClick={() => onNavigate('landing')}
           >
-            <div className="bg-[#18181b] text-[#faf8f5] px-2.5 py-1 rounded font-mono font-bold text-sm tracking-wide border border-[#18181b]">
+            <div className="bg-[#18181b] text-[#faf8f5] px-2 py-0.5 sm:px-2.5 sm:py-1 rounded font-mono font-bold text-xs sm:text-sm tracking-wide border border-[#18181b]">
               L✦
             </div>
-            <span className="font-serif italic text-2xl font-bold tracking-tight text-[#18181b]">
+            <span className="font-serif italic text-xl sm:text-2xl font-bold tracking-tight text-[#18181b]">
               Lumen
             </span>
           </div>
@@ -128,14 +126,14 @@ function Nav({ onNavigate }: { onNavigate: (s: Screen) => void }) {
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="absolute top-18 left-4 right-4 bg-[#faf8f5] border-2 border-[#18181b] shadow-[4px_4px_0px_0px_#18181b] rounded-xl p-5 flex flex-col gap-4 z-40"
+              className="absolute top-20 left-3 right-3 sm:left-4 sm:right-4 bg-[#faf8f5] border-2 border-[#18181b] shadow-[4px_4px_0px_0px_#18181b] rounded-xl p-4 sm:p-5 flex flex-col gap-3 sm:gap-4 z-40"
             >
-              <a href="#demo" onClick={() => setMobileMenuOpen(false)} className="font-mono text-xs font-bold uppercase tracking-wider text-[#18181b] hover:underline underline-offset-4 decoration-2">TRY DEMO</a>
-              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="font-mono text-xs font-bold uppercase tracking-wider text-[#18181b] hover:underline underline-offset-4 decoration-2">FEATURES</a>
-              <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="font-mono text-xs font-bold uppercase tracking-wider text-[#18181b] hover:underline underline-offset-4 decoration-2">HOW IT WORKS</a>
+              <a href="#demo" onClick={() => setMobileMenuOpen(false)} className="font-mono text-xs sm:text-xs font-bold uppercase tracking-wider text-[#18181b] hover:underline underline-offset-4 decoration-2 py-1">TRY DEMO</a>
+              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="font-mono text-xs sm:text-xs font-bold uppercase tracking-wider text-[#18181b] hover:underline underline-offset-4 decoration-2 py-1">FEATURES</a>
+              <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="font-mono text-xs sm:text-xs font-bold uppercase tracking-wider text-[#18181b] hover:underline underline-offset-4 decoration-2 py-1">HOW IT WORKS</a>
               <div className="flex flex-col gap-2 pt-2 border-t-2 border-[#18181b]/10">
                 <button
-                  className="w-full py-2 bg-[#e9dcf8] text-[#18181b] border-2 border-[#18181b] shadow-[2px_2px_0px_0px_#18181b] rounded-lg font-mono text-xs font-bold"
+                  className="w-full py-2.5 sm:py-2 bg-[#e9dcf8] text-[#18181b] border-2 border-[#18181b] shadow-[2px_2px_0px_0px_#18181b] rounded-lg font-mono text-xs font-bold"
                   onClick={() => { setMobileMenuOpen(false); onNavigate('dashboard'); }}
                 >
                   Open Workspace
@@ -152,38 +150,39 @@ function Nav({ onNavigate }: { onNavigate: (s: Screen) => void }) {
 
 function Hero({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   return (
-    <section className="relative bg-[#faf8f5] min-h-[85vh] flex flex-col justify-center px-4 sm:px-6 lg:px-8 pt-32 pb-16 overflow-hidden">
-      <div className="mx-auto max-w-5xl w-full text-center space-y-8 z-10">
-        <div className="space-y-4 max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 border-2 border-[#18181b] px-3 py-1.5 bg-[#e9dcf8] rounded-full text-[10px] font-mono font-bold tracking-wider text-[#18181b] uppercase shadow-[2px_2px_0px_0px_#18181b]">
+    <section className="relative bg-[#faf8f5] min-h-[85vh] flex flex-col justify-center px-3 sm:px-4 md:px-6 lg:px-8 pt-24 sm:pt-28 md:pt-32 pb-12 sm:pb-16 overflow-hidden">
+      <div className="mx-auto max-w-5xl w-full text-center space-y-6 sm:space-y-8 z-10">
+        <div className="space-y-3 sm:space-y-4 max-w-4xl mx-auto px-2">
+          <div className="inline-flex items-center gap-1.5 border-2 border-[#18181b] px-2.5 py-1 sm:px-3 sm:py-1.5 bg-[#e9dcf8] rounded-full text-[9px] sm:text-[10px] font-mono font-bold tracking-wider text-[#18181b] uppercase shadow-[2px_2px_0px_0px_#18181b]">
             <span>⚡</span>
-            <span>Write Code Together, Assisted by AI</span>
+            <span className="hidden xs:inline">AI-ASSISTED CODING WORKSPACE</span>
+            <span className="xs:hidden">AI WORKSPACE</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-light tracking-tight text-[#18181b] leading-[1.05] font-serif">
-            A simple collaborative <br />
+          <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-light tracking-tight text-[#18181b] leading-[1.1] sm:leading-[1.05] font-serif">
+            Your code. Your AI. <br />
             <span className="font-serif italic text-zinc-600 font-normal">
-              web code editor.
+              One workspace.
             </span>
           </h1>
 
-          <p className="text-xs sm:text-sm md:text-base lg:text-lg text-zinc-600 max-w-2xl mx-auto leading-relaxed font-mono">
-            Lumen is a fast web editor where you can write code with your friends in real-time, get instant help from a smart AI assistant, and manage all your projects easily in one place.
+          <p className="text-[10px] xs:text-xs sm:text-sm md:text-base lg:text-lg text-zinc-600 max-w-2xl mx-auto leading-relaxed font-mono px-2">
+            Lumen is a browser-based coding workspace with an AI assistant, multi-file editor, and instant code execution — built to help you write, understand, and improve code faster.
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 max-w-md mx-auto sm:max-w-none">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2 sm:pt-4 max-w-md mx-auto sm:max-w-none px-4">
           <button
-            className="w-full sm:w-auto h-12 px-8 bg-[#18181b] text-[#faf8f5] hover:bg-zinc-800 border-2 border-[#18181b] font-mono text-xs font-bold rounded-xl shadow-[4px_4px_0px_0px_#e9dcf8] hover:shadow-[2px_2px_0px_0px_#e9dcf8] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+            className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-[#18181b] text-[#faf8f5] hover:bg-zinc-800 border-2 border-[#18181b] font-mono text-[10px] sm:text-xs font-bold rounded-xl shadow-[4px_4px_0px_0px_#e9dcf8] hover:shadow-[2px_2px_0px_0px_#e9dcf8] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
             onClick={() => onNavigate('dashboard')}
           >
-            Launch Free Workspace
+            Open Workspace
           </button>
           <a
             href="#demo"
-            className="w-full sm:w-auto h-12 px-8 bg-[#faf8f5] text-[#18181b] hover:bg-[#e9dcf8]/10 border-2 border-[#18181b] font-mono text-xs font-bold rounded-xl flex items-center justify-center shadow-[4px_4px_0px_0px_#18181b] hover:shadow-[2px_2px_0px_0px_#18181b] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+            className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-[#faf8f5] text-[#18181b] hover:bg-[#e9dcf8]/10 border-2 border-[#18181b] font-mono text-[10px] sm:text-xs font-bold rounded-xl flex items-center justify-center shadow-[4px_4px_0px_0px_#18181b] hover:shadow-[2px_2px_0px_0px_#18181b] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
           >
-            Try IDE Simulator
+            Try AI Assistant
           </a>
         </div>
       </div>
@@ -197,8 +196,6 @@ function EditorSimulator() {
   const [isRefactored, setIsRefactored] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [isCompiling, setIsCompiling] = useState(false);
-  const [collaboratorsJoined, setCollaboratorsJoined] = useState(false);
-  const [cursors, setCursors] = useState<{ name: string; line: number; color: string }[]>([]);
 
   useEffect(() => {
     setIsRefactored(false);
@@ -209,7 +206,7 @@ function EditorSimulator() {
   const handleRefactorSim = () => {
     if (isTyping || isCompiling) return;
     setIsTyping(true);
-    
+
     setTimeout(() => {
       setIsTyping(false);
       setIsRefactored(true);
@@ -221,120 +218,82 @@ function EditorSimulator() {
     }, 1800);
   };
 
-  const handleMultiplayerSim = () => {
-    if (collaboratorsJoined) {
-      setCollaboratorsJoined(false);
-      setCursors([]);
-      return;
-    }
-    setCollaboratorsJoined(true);
-    setCursors([
-      { name: 'Sarah (typing)', line: 3, color: '#a855f7' },
-      { name: 'Alex', line: 4, color: '#10b981' }
-    ]);
-  };
-
   const fileData = fileSnippets[selectedFile];
   const activeLines = isRefactored ? fileData.refactored : fileData.lines;
 
   return (
-    <section id="demo" className="relative bg-[#faf8f5] border-t-2 border-[#18181b] px-4 sm:px-6 lg:px-8 py-20">
-      <div className="mx-auto max-w-4xl space-y-12">
-        <div className="text-center space-y-3">
-          <span className="text-xs font-mono font-bold text-[#18181b] uppercase tracking-widest border-2 border-[#18181b] px-3 py-1.5 bg-[#e9dcf8] rounded-full inline-block shadow-[2px_2px_0px_0px_#18181b]">
+    <section id="demo" className="relative bg-[#faf8f5] border-t-2 border-[#18181b] px-3 sm:px-4 md:px-6 lg:px-8 py-12 sm:py-16 md:py-20">
+      <div className="mx-auto max-w-4xl space-y-8 sm:space-y-12">
+        <div className="text-center space-y-2 sm:space-y-3 px-2">
+          <span className="text-[10px] sm:text-xs font-mono font-bold text-[#18181b] uppercase tracking-widest border-2 border-[#18181b] px-2.5 py-1 sm:px-3 sm:py-1.5 bg-[#e9dcf8] rounded-full inline-block shadow-[2px_2px_0px_0px_#18181b]">
             ⚡ Try it out
           </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-tight text-[#18181b] font-serif">
-            Test the Editor
+          <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-light tracking-tight text-[#18181b] font-serif">
+            Code. Run. Improve.
           </h2>
-          <p className="text-xs sm:text-sm md:text-base font-mono text-zinc-600 max-w-lg mx-auto">
-            Click the tabs to change files. Click "AI Refactor" to see the AI assistant instantly edit code.
+          <p className="text-[10px] xs:text-xs sm:text-sm md:text-base font-mono text-zinc-600 max-w-lg mx-auto px-2">
+            Write code in the editor, run it instantly, and use AI to explain, review, fix, or refactor your code.
           </p>
         </div>
 
-        <div className="border-2 border-[#18181b] bg-white rounded-2xl shadow-[6px_6px_0px_0px_#18181b] overflow-hidden flex flex-col">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between border-b-2 border-[#18181b] bg-[#faf8f5] px-4 py-2 gap-2">
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+        <div className="border-2 border-[#18181b] bg-white rounded-xl sm:rounded-2xl shadow-[4px_4px_0px_0px_#18181b] sm:shadow-[6px_6px_0px_0px_#18181b] overflow-hidden flex flex-col">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between border-b-2 border-[#18181b] bg-[#faf8f5] px-3 sm:px-4 py-2 gap-2">
+            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar w-full sm:w-auto">
               {(Object.keys(fileSnippets) as Array<keyof typeof fileSnippets>).map((fileName) => (
                 <button
                   key={fileName}
                   onClick={() => setSelectedFile(fileName)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-mono text-xs font-bold text-left transition-all border ${
+                  className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg font-mono text-[10px] sm:text-xs font-bold text-left transition-all border shrink-0 ${
                     selectedFile === fileName
                       ? 'bg-[#e9dcf8] text-[#18181b] border-[#18181b]'
                       : 'text-zinc-500 hover:bg-zinc-100 border-transparent'
                   }`}
                 >
-                  <FileCode size={13} />
+                  <FileCode size={11} className="sm:size-13" />
                   <span>{fileName}</span>
                 </button>
               ))}
             </div>
 
-            <div className="flex items-center gap-2 self-end sm:self-auto">
+            <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
               <button
                 onClick={handleRefactorSim}
                 disabled={isTyping || isCompiling}
-                className="py-1.5 px-3 bg-[#e9dcf8] hover:bg-[#ebd3f8] disabled:opacity-50 text-[#18181b] border-2 border-[#18181b] shadow-[2px_2px_0px_0px_#18181b] hover:shadow-[1px_1px_0px_0px_#18181b] hover:translate-x-[0.5px] hover:translate-y-[0.5px] rounded-lg font-mono text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-all"
+                className="py-1.5 px-2.5 sm:px-3 bg-[#e9dcf8] hover:bg-[#ebd3f8] disabled:opacity-50 text-[#18181b] border-2 border-[#18181b] shadow-[2px_2px_0px_0px_#18181b] hover:shadow-[1px_1px_0px_0px_#18181b] hover:translate-x-[0.5px] hover:translate-y-[0.5px] rounded-lg font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-all"
               >
-                <Sparkles size={11} className="text-[#18181b]" />
-                {isTyping ? 'Writing...' : isCompiling ? 'Validating...' : 'AI Refactor'}
-              </button>
-              <button
-                onClick={handleMultiplayerSim}
-                className={`py-1.5 px-3 border-2 border-[#18181b] rounded-lg font-mono text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-all ${
-                  collaboratorsJoined
-                    ? 'bg-[#e9dcf8] text-[#18181b] shadow-[1px_1px_0px_0px_#18181b] translate-x-[1px] translate-y-[1px]'
-                    : 'bg-white text-zinc-700 hover:bg-zinc-50 shadow-[2px_2px_0px_0px_#18181b]'
-                }`}
-              >
-                <Users size={11} />
-                {collaboratorsJoined ? 'Leave Session' : 'Invite Peers'}
+                <Sparkles size={10} className="sm:size-11 text-[#18181b]" />
+                <span className="hidden xs:inline">{isTyping ? 'Writing...' : isCompiling ? 'Validating...' : 'AI Refactor'}</span>
+                <span className="xs:inline">{isTyping ? '...' : isCompiling ? '...' : 'AI'}</span>
               </button>
             </div>
           </div>
 
-          <div className="flex-1 bg-[#faf8f5] p-4 sm:p-6 font-mono text-xs sm:text-sm md:text-base text-zinc-700 flex flex-col justify-between min-h-[250px] relative">
+          <div className="flex-1 bg-[#faf8f5] p-3 sm:p-4 md:p-6 font-mono text-[10px] xs:text-xs sm:text-sm md:text-base text-zinc-700 flex flex-col justify-between min-h-[200px] sm:min-h-[250px] relative">
             <div className="space-y-1">
-              <div className="flex items-center justify-between pb-3 border-b border-[#18181b]/10 mb-3 text-[10px] text-zinc-500">
-                <span className="flex items-center gap-1.5 text-[#18181b] font-bold">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="flex items-center justify-between pb-2 sm:pb-3 border-b border-[#18181b]/10 mb-2 sm:mb-3 text-[9px] sm:text-[10px] text-zinc-500">
+                <span className="flex items-center gap-1.5 text-[#18181b] font-bold truncate">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                   {selectedFile}
                 </span>
-                <span className="text-[9px] uppercase font-bold text-[#18181b] bg-[#e9dcf8] px-1.5 py-0.5 rounded border border-[#18181b]">
-                  {collaboratorsJoined ? '2 peers online' : 'Sandbox mode'}
+                <span className="text-[8px] sm:text-[9px] uppercase font-bold text-[#18181b] bg-[#e9dcf8] px-1 sm:px-1.5 py-0.5 rounded border border-[#18181b] shrink-0">
+                  Sandbox mode
                 </span>
               </div>
 
               <div className="relative font-mono leading-relaxed space-y-0.5">
-                {activeLines.map((line, idx) => {
-                  const matchingCursor = cursors.find((c) => c.line === idx + 1);
-                  return (
-                    <div
-                      key={idx}
-                      className={`relative flex items-center pl-1 rounded hover:bg-[#e9dcf8]/10 ${
-                        isTyping && idx === 3 ? 'bg-[#e9dcf8]/35 text-[#18181b]' : ''
-                      }`}
-                    >
-                      <span className="w-8 shrink-0 text-zinc-400 text-[10px] text-right pr-2 select-none font-bold">
-                        {String(idx + 1).padStart(2, '0')}
-                      </span>
-                      <span className="text-[#18181b] font-semibold whitespace-pre">{line}</span>
-
-                      {matchingCursor && (
-                        <div
-                          className="absolute left-32 px-1.5 py-0.5 text-[8px] font-sans font-bold border-2 border-[#18181b] rounded flex items-center gap-1 select-none animate-bounce bg-white"
-                          style={{
-                            color: matchingCursor.color
-                          }}
-                        >
-                          <span className="h-1 w-1 rounded-full bg-current animate-ping" />
-                          {matchingCursor.name}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                {activeLines.map((line, idx) => (
+                  <div
+                    key={idx}
+                    className={`relative flex items-center pl-1 rounded hover:bg-[#e9dcf8]/10 ${
+                      isTyping && idx === 3 ? 'bg-[#e9dcf8]/35 text-[#18181b]' : ''
+                    }`}
+                  >
+                    <span className="w-6 sm:w-8 shrink-0 text-zinc-400 text-[9px] sm:text-[10px] text-right pr-1.5 sm:pr-2 select-none font-bold">
+                      {String(idx + 1).padStart(2, '0')}
+                    </span>
+                    <span className="text-[#18181b] font-semibold whitespace-pre text-[10px] xs:text-xs sm:text-sm md:text-base">{line}</span>
+                  </div>
+                ))}
 
                 {isTyping && (
                   <motion.div
@@ -342,8 +301,8 @@ function EditorSimulator() {
                     animate={{ opacity: 1 }}
                     className="absolute inset-0 bg-white/95 backdrop-blur-[1px] flex flex-col items-center justify-center border-2 border-dashed border-[#18181b] rounded-lg"
                   >
-                    <RefreshCw className="h-5 w-5 text-[#18181b] animate-spin mb-2" />
-                    <span className="text-[10px] text-[#18181b] uppercase tracking-widest font-mono font-bold">
+                    <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5 text-[#18181b] animate-spin mb-1.5 sm:mb-2" />
+                    <span className="text-[9px] sm:text-[10px] text-[#18181b] uppercase tracking-widest font-mono font-bold text-center px-2">
                       Refactoring validation logic...
                     </span>
                   </motion.div>
@@ -351,14 +310,15 @@ function EditorSimulator() {
               </div>
             </div>
 
-            <div className="mt-8 border-t border-[#18181b]/10 pt-4 flex items-center justify-between text-[10px] text-[#18181b] font-mono font-bold">
+            <div className="mt-6 sm:mt-8 border-t border-[#18181b]/10 pt-3 sm:pt-4 flex items-center justify-between text-[9px] sm:text-[10px] text-[#18181b] font-mono font-bold">
               <span className="flex items-center gap-1.5">
                 {isCompiling ? (
                   <span className="h-1.5 w-1.5 rounded-full bg-yellow-500 animate-ping" />
                 ) : (
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 )}
-                {isCompiling ? 'Validating schema changes...' : 'Workspace compiling successful'}
+                <span className="hidden xs:inline">{isCompiling ? 'Validating schema changes...' : 'Workspace compiling successful'}</span>
+                <span className="xs:inline">{isCompiling ? 'Validating...' : 'Compiling successful'}</span>
               </span>
               <span>UTF-8</span>
             </div>
@@ -372,21 +332,21 @@ function EditorSimulator() {
 // KEY FEATURES PILLARS
 function KeyFeatures() {
   const pillars = [
-    { title: '🤖 Smart AI Assistant', desc: 'Explains complex code, suggests bug fixes, and refactors files instantly.' },
-    { title: '👥 Real-Time Sync', desc: 'Multiple users can edit files simultaneously with live cursor tracking.' },
-    { title: '💻 Clean IDE', desc: 'Organized file browser and editor tabs built for speed.' },
-    { title: '⚡ Fast Terminal', desc: 'Run dev scripts and see compiler output in one place.' }
+    { title: '🤖 AI Code Assistant', desc: 'Explain, generate, review, fix and refactor code with AI.' },
+    { title: '⌨️ Multi-File Editor', desc: 'Work across files with a familiar browser-based coding workspace.' },
+    { title: '▶️ Instant Code Execution', desc: 'Run your code and see output and errors directly in the workspace.' },
+    { title: '🛠️ Developer Workspace', desc: 'Editor, files, terminal output and AI assistance in one interface.' }
   ];
 
   return (
-    <section id="features" className="bg-[#faf8f5] border-t-2 border-[#18181b] px-4 sm:px-6 lg:px-8 py-20">
-      <div className="mx-auto max-w-5xl space-y-12">
-        <h2 className="text-4xl font-light text-[#18181b] font-serif text-center">Built for Productivity</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+    <section id="features" className="bg-[#faf8f5] border-t-2 border-[#18181b] px-3 sm:px-4 md:px-6 lg:px-8 py-12 sm:py-16 md:py-20">
+      <div className="mx-auto max-w-5xl space-y-8 sm:space-y-12">
+        <h2 className="text-2xl xs:text-3xl sm:text-4xl font-light text-[#18181b] font-serif text-center px-2">Everything You Need to Code</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
           {pillars.map((p, idx) => (
-            <div key={idx} className="bg-white border-2 border-[#18181b] p-6 rounded-2xl shadow-[4px_4px_0px_0px_#18181b]">
-              <h3 className="font-serif font-bold text-lg text-[#18181b] mb-3">{p.title}</h3>
-              <p className="text-xs font-mono text-zinc-600">{p.desc}</p>
+            <div key={idx} className="bg-white border-2 border-[#18181b] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl shadow-[3px_3px_0px_0px_#18181b] sm:shadow-[4px_4px_0px_0px_#18181b]">
+              <h3 className="font-serif font-bold text-base sm:text-lg text-[#18181b] mb-2 sm:mb-3">{p.title}</h3>
+              <p className="text-[10px] xs:text-xs sm:text-xs font-mono text-zinc-600 leading-relaxed">{p.desc}</p>
             </div>
           ))}
         </div>
@@ -398,17 +358,17 @@ function KeyFeatures() {
 // RESUME DESCRIPTION CALLOUT
 function ResumeCallout({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   return (
-    <section className="bg-[#e9dcf8] border-t-2 border-[#18181b] px-4 sm:px-6 lg:px-8 py-20 text-center relative overflow-hidden">
-      <div className="mx-auto max-w-4xl space-y-6 relative z-10">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light text-[#18181b] tracking-tight leading-snug max-w-3xl mx-auto font-serif">
-          "Build faster with collaborative tools."
+    <section className="bg-[#e9dcf8] border-t-2 border-[#18181b] px-3 sm:px-4 md:px-6 lg:px-8 py-12 sm:py-16 md:py-20 text-center relative overflow-hidden">
+      <div className="mx-auto max-w-4xl space-y-4 sm:space-y-6 relative z-10 px-2">
+        <h2 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light text-[#18181b] tracking-tight leading-snug max-w-3xl mx-auto font-serif">
+          "Write less boilerplate. Understand more code."
         </h2>
-        <div className="pt-4">
+        <div className="pt-3 sm:pt-4">
           <button
             onClick={() => onNavigate('dashboard')}
-            className="h-12 px-8 bg-[#18181b] hover:bg-zinc-800 text-[#faf8f5] border-2 border-[#18181b] shadow-[4px_4px_0px_0px_#faf8f5] hover:shadow-[2px_2px_0px_0px_#faf8f5] hover:-translate-x-0.5 hover:-translate-y-0.5 font-mono text-xs font-bold rounded-xl transition-all flex items-center gap-2 mx-auto"
+            className="h-11 sm:h-12 px-6 sm:px-8 bg-[#18181b] hover:bg-zinc-800 text-[#faf8f5] border-2 border-[#18181b] shadow-[4px_4px_0px_0px_#faf8f5] hover:shadow-[2px_2px_0px_0px_#faf8f5] hover:-translate-x-0.5 hover:-translate-y-0.5 font-mono text-[10px] sm:text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 mx-auto"
           >
-            Launch Free Workspace <ArrowRight size={14} />
+            Open Lumen Workspace →
           </button>
         </div>
       </div>
@@ -418,10 +378,10 @@ function ResumeCallout({ onNavigate }: { onNavigate: (s: Screen) => void }) {
 
 function Footer() {
   return (
-    <footer className="bg-[#faf8f5] border-t-2 border-[#18181b] py-8 px-4 sm:px-6 lg:px-8 font-mono text-[10px] text-[#18181b] font-bold">
-      <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4">
+    <footer className="bg-[#faf8f5] border-t-2 border-[#18181b] py-6 sm:py-8 px-3 sm:px-4 md:px-6 lg:px-8 font-mono text-[9px] sm:text-[10px] text-[#18181b] font-bold">
+      <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-2">
-          <span className="font-serif italic text-xl font-bold text-[#18181b]">Lumen</span>
+          <span className="font-serif italic text-lg sm:text-xl font-bold text-[#18181b]">Lumen</span>
           <span>© 2026 Lumen Labs.</span>
         </div>
       </div>

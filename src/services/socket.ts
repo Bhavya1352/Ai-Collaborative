@@ -30,16 +30,20 @@ class SocketService {
   private socket: Socket | null = null;
   private currentProject: string | null = null;
   private currentFile: string | null = null;
+  private available = true;
 
   connect(userId: string, userName: string): void {
-    if (this.socket?.connected) return;
+    if (this.socket?.connected || !this.available) return;
 
     this.socket = io(SOCKET_URL, {
       auth: { userId, userName },
-      transports: ['websocket', 'polling']
+      transports: ['websocket', 'polling'],
+      reconnection: false,
+      timeout: 5000,
     });
 
     this.socket.on('connect', () => {
+      this.available = true;
       console.log('Connected to socket server');
     });
 
@@ -47,8 +51,11 @@ class SocketService {
       console.log('Disconnected from socket server');
     });
 
-    this.socket.on('error', (error) => {
-      console.error('Socket error:', error);
+    this.socket.on('connect_error', () => {
+      // Server unavailable — stop retrying silently
+      this.available = false;
+      this.socket?.disconnect();
+      this.socket = null;
     });
   }
 
@@ -59,6 +66,7 @@ class SocketService {
       this.socket = null;
       this.currentProject = null;
       this.currentFile = null;
+      this.available = true; // reset so next connect() attempt is allowed
     }
   }
 

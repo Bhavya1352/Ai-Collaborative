@@ -6,6 +6,7 @@ import { Dashboard } from '@/components/screens/Dashboard';
 import Editor from '@/components/screens/Editor';
 import { CommandPalette } from '@/components/screens/Editor';
 import type { Screen } from '@/lib/data';
+import { useAuth } from '@/contexts/AuthContext';
 import './App.css';
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -14,6 +15,7 @@ function App() {
   const [screen, setScreen] = useState<Screen>('landing');
   const [cmdOpen, setCmdOpen] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState<string | undefined>();
+  const { loading: authLoading } = useAuth();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -28,11 +30,20 @@ function App() {
 
   const navigate = (s: Screen, projectId?: string) => {
     setScreen(s);
-    if (projectId) {
-      setCurrentProjectId(projectId);
-    }
+    if (projectId) setCurrentProjectId(projectId);
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
+
+  if (authLoading) {
+    return (
+      <div className="relative min-h-screen text-foreground antialiased overflow-x-hidden w-full">
+        <AuroraBackground />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen text-foreground antialiased overflow-x-hidden w-full">
@@ -50,8 +61,8 @@ function App() {
             <Dashboard onNavigate={navigate} onCommand={() => setCmdOpen(true)} />
           )}
           {screen === 'editor' && (
-            <Editor 
-              onBack={() => navigate('dashboard')} 
+            <Editor
+              onBack={() => navigate('dashboard')}
               onCommand={() => setCmdOpen(true)}
               projectId={currentProjectId}
             />

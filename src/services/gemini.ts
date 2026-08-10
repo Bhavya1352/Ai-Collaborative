@@ -1,126 +1,261 @@
+import { GoogleGenAI } from '@google/genai';
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'YOUR_GEMINI_API_KEY';
+const AI_AVAILABLE =
+  API_KEY.length > 10 &&
+  API_KEY !== 'YOUR_GEMINI_API_KEY';
 
-const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+const ai = AI_AVAILABLE
+  ? new GoogleGenAI({ apiKey: API_KEY })
+  : null;
+
+const MODEL = 'gemini-3.6-flash';
 
 export interface AIResponse {
   text: string;
   error?: string;
 }
 
+const notConfigured = (): AIResponse => ({
+  text: '',
+  error:
+    'AI is not configured. Check VITE_GEMINI_API_KEY in your .env file.',
+});
+
+async function generate(prompt: string): Promise<AIResponse> {
+  if (!ai) return notConfigured();
+
+  try {
+    const response = await ai.models.generateContent({
+      model: MODEL,
+      contents: prompt,
+      config: {
+        maxOutputTokens: 2048,
+      },
+    });
+
+    return {
+      text: response.text || '',
+    };
+  } catch (error: any) {
+    console.error('[Gemini]', error);
+
+    return {
+      text: '',
+      error:
+        error?.message ||
+        'Failed to get response from Gemini.',
+    };
+  }
+}
+
 export const geminiService = {
-  async explainCode(code: string, language: string): Promise<AIResponse> {
-    try {
-      const prompt = `Explain this ${language} code in a clear and concise way. Focus on what the code does, key patterns used, and any potential improvements:\n\n\`\`\`${language}\n${code}\n\`\`\``;
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      return { text: response.text() };
-    } catch (error: any) {
-      return { text: '', error: error.message || 'Failed to explain code' };
-    }
+  async explainCode(
+    code: string,
+    language: string
+  ): Promise<AIResponse> {
+    return generate(`
+You are a senior software developer.
+
+Explain this ${language} code clearly and concisely.
+
+Cover:
+- What the code does
+- Important logic
+- Patterns used
+- Possible improvements
+
+Code:
+
+\`\`\`${language}
+${code}
+\`\`\`
+`);
   },
 
-  async generateCode(description: string, language: string, context?: string): Promise<AIResponse> {
-    try {
-      const prompt = context 
-        ? `Generate ${language} code for: ${description}\n\nContext:\n${context}\n\nProvide only the code, no explanation.`
-        : `Generate ${language} code for: ${description}\n\nProvide only the code, no explanation.`;
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      return { text: response.text() };
-    } catch (error: any) {
-      return { text: '', error: error.message || 'Failed to generate code' };
-    }
+  async generateCode(
+    description: string,
+    language: string,
+    context?: string
+  ): Promise<AIResponse> {
+    return generate(`
+Generate ${language} code for:
+
+${description}
+
+${context ? `Context:\n${context}` : ''}
+
+Provide the code followed by a short explanation.
+`);
   },
 
-  async reviewCode(code: string, language: string): Promise<AIResponse> {
-    try {
-      const prompt = `Review this ${language} code for:\n1. Bugs and errors\n2. Performance issues\n3. Security vulnerabilities\n4. Code style and best practices\n5. Suggestions for improvement\n\nProvide specific, actionable feedback:\n\n\`\`\`${language}\n${code}\n\`\`\``;
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      return { text: response.text() };
-    } catch (error: any) {
-      return { text: '', error: error.message || 'Failed to review code' };
-    }
+  async reviewCode(
+    code: string,
+    language: string
+  ): Promise<AIResponse> {
+    return generate(`
+Review this ${language} code.
+
+Check:
+1. Bugs and errors
+2. Performance
+3. Security
+4. Code quality
+5. Best practices
+6. Improvements
+
+Code:
+
+\`\`\`${language}
+${code}
+\`\`\`
+`);
   },
 
-  async fixCode(code: string, language: string, error?: string): Promise<AIResponse> {
-    try {
-      const prompt = error
-        ? `Fix this ${language} code. The error is: ${error}\n\nCode:\n\`\`\`${language}\n${code}\n\`\`\`\n\nProvide the fixed code with a brief explanation of what was changed.`
-        : `Fix any issues in this ${language} code:\n\n\`\`\`${language}\n${code}\n\`\`\`\n\nProvide the fixed code with a brief explanation of what was changed.`;
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      return { text: response.text() };
-    } catch (error: any) {
-      return { text: '', error: error.message || 'Failed to fix code' };
-    }
+  async fixCode(
+    code: string,
+    language: string,
+    error?: string
+  ): Promise<AIResponse> {
+    return generate(`
+Fix this ${language} code.
+
+${error ? `Current error:\n${error}` : ''}
+
+Code:
+
+\`\`\`${language}
+${code}
+\`\`\`
+
+Return:
+1. Fixed code
+2. Short explanation
+`);
   },
 
-  async refactorCode(code: string, language: string, instructions: string): Promise<AIResponse> {
-    try {
-      const prompt = `Refactor this ${language} code according to these instructions: ${instructions}\n\nOriginal code:\n\`\`\`${language}\n${code}\n\`\`\`\n\nProvide the refactored code with a brief explanation of the changes made.`;
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      return { text: response.text() };
-    } catch (error: any) {
-      return { text: '', error: error.message || 'Failed to refactor code' };
-    }
+  async refactorCode(
+    code: string,
+    language: string,
+    instructions: string
+  ): Promise<AIResponse> {
+    return generate(`
+Refactor this ${language} code.
+
+Instructions:
+${instructions}
+
+Original code:
+
+\`\`\`${language}
+${code}
+\`\`\`
+
+Return the improved code and a short explanation.
+`);
   },
 
-  async chat(message: string, history: Array<{ role: string; content: string }> = []): Promise<AIResponse> {
-    try {
-      const chat = model.startChat({
-        history: history.map(msg => ({
-          role: msg.role === 'user' ? 'user' : 'model',
-          parts: [{ text: msg.content }]
-        }))
-      });
-      const result = await chat.sendMessage(message);
-      const response = await result.response;
-      return { text: response.text() };
-    } catch (error: any) {
-      return { text: '', error: error.message || 'Failed to get response' };
-    }
-  },
-
-  // 🔥 STREAMING CHAT — delivers tokens word-by-word like ChatGPT
-  async streamChat(
+  async chat(
     message: string,
-    history: Array<{ role: string; content: string }> = [],
-    onChunk: (text: string) => void,
-    onDone?: () => void,
-    onError?: (err: string) => void
-  ): Promise<void> {
+    history: Array<{
+      role: string;
+      content: string;
+    }> = []
+  ): Promise<AIResponse> {
+    if (!ai) return notConfigured();
+
     try {
-      const chat = model.startChat({
-        history: history.map(msg => ({
+      const contents = [
+        ...history.map((msg) => ({
           role: msg.role === 'user' ? 'user' : 'model',
-          parts: [{ text: msg.content }]
+          parts: [{ text: msg.content }],
         })),
-        generationConfig: {
-          temperature: 0.7,
+        {
+          role: 'user',
+          parts: [{ text: message }],
+        },
+      ];
+
+      const response = await ai.models.generateContent({
+        model: MODEL,
+        contents,
+        config: {
           maxOutputTokens: 2048,
         },
       });
 
-      const result = await chat.sendMessageStream(message);
+      return {
+        text: response.text || '',
+      };
+    } catch (error: any) {
+      console.error('[Gemini Chat]', error);
 
-      for await (const chunk of result.stream) {
-        const text = chunk.text();
-        if (text) onChunk(text);
+      return {
+        text: '',
+        error:
+          error?.message ||
+          'Failed to get AI response.',
+      };
+    }
+  },
+
+  async streamChat(
+    message: string,
+    history: Array<{
+      role: string;
+      content: string;
+    }> = [],
+    onChunk: (text: string) => void,
+    onDone?: () => void,
+    onError?: (err: string) => void
+  ): Promise<void> {
+    if (!ai) {
+      onError?.(
+        'AI is not configured. Check VITE_GEMINI_API_KEY.'
+      );
+      onDone?.();
+      return;
+    }
+
+    try {
+      const contents = [
+        ...history.map((msg) => ({
+          role: msg.role === 'user' ? 'user' : 'model',
+          parts: [{ text: msg.content }],
+        })),
+        {
+          role: 'user',
+          parts: [{ text: message }],
+        },
+      ];
+
+      const stream = await ai.models.generateContentStream({
+        model: MODEL,
+        contents,
+        config: {
+          maxOutputTokens: 2048,
+        },
+      });
+
+      for await (const chunk of stream) {
+        const text = chunk.text || '';
+
+        if (text) {
+          onChunk(text);
+        }
       }
 
       onDone?.();
     } catch (error: any) {
-      onError?.(error.message || 'Streaming failed');
+      console.error('[Gemini Stream]', error);
+
+      onError?.(
+        error?.message || 'Streaming failed.'
+      );
     }
   },
 
-  // 🔥 STREAMING CODE EXPLANATION — for editor AI sidebar
   async streamExplainCode(
     code: string,
     language: string,
@@ -128,27 +263,62 @@ export const geminiService = {
     onDone?: () => void,
     onError?: (err: string) => void
   ): Promise<void> {
+    if (!ai) {
+      onError?.(
+        'AI is not configured. Check VITE_GEMINI_API_KEY.'
+      );
+      onDone?.();
+      return;
+    }
+
     try {
-      const prompt = `You are a senior developer. Explain this ${language} code clearly and helpfully. Cover:
-- What it does (1-2 sentences)
-- Key logic and patterns
-- Potential improvements or issues
+      const prompt = `
+You are a senior developer.
+
+Explain this ${language} code clearly.
+
+Cover:
+- What it does
+- Key logic
+- Important patterns
+- Problems
+- Improvements
+
+Code:
 
 \`\`\`${language}
 ${code}
-\`\`\``;
+\`\`\`
+`;
 
-      const result = await model.generateContentStream(prompt);
+      const stream =
+        await ai.models.generateContentStream({
+          model: MODEL,
+          contents: prompt,
+          config: {
+            maxOutputTokens: 2048,
+          },
+        });
 
-      for await (const chunk of result.stream) {
-        const text = chunk.text();
-        if (text) onChunk(text);
+      for await (const chunk of stream) {
+        const text = chunk.text || '';
+
+        if (text) {
+          onChunk(text);
+        }
       }
 
       onDone?.();
     } catch (error: any) {
-      onError?.(error.message || 'Streaming failed');
+      console.error('[Gemini Explain]', error);
+
+      onError?.(
+        error?.message || 'Streaming failed.'
+      );
     }
   },
-};
 
+  isAvailable(): boolean {
+    return AI_AVAILABLE;
+  },
+};

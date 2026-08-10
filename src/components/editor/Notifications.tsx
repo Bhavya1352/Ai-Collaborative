@@ -17,10 +17,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { notifications } from '@/lib/data';
 
 export function NotificationsPanel() {
   const [open, setOpen] = useState(false);
+  const [notifications] = useState<any[]>([]); // TODO: Replace with real activity data from Firestore
   const unreadCount = notifications.filter((n) => n.unread).length;
 
   const markAsRead = (id: string) => {

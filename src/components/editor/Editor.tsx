@@ -8,9 +8,6 @@ import {
   X,
   Loader2,
   FileCode2,
-  GitBranch,
-  GitPullRequest,
-  Globe,
   Sparkles,
 } from 'lucide-react';
 import type { editor } from 'monaco-editor';
@@ -31,9 +28,10 @@ import { EditorTabs } from './EditorTabs';
 import { StatusBar } from './StatusBar';
 import { NotificationsPanel } from './Notifications';
 import { KeyboardShortcutsDialog } from './KeyboardShortcuts';
-import { collaborators } from '@/lib/data';
 import { firestoreService, type File as FileType } from '@/services/firestore';
+import { demoStorage } from '@/services/demoStorage';
 import { socketService } from '@/services/socket';
+import { pistonService } from '@/services/piston';
 import { useAuth } from '@/contexts/AuthContext';
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -65,20 +63,6 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
   // Simulated interactions states
   const [activeAITab, setActiveAITab] = useState('chat');
   const [simulatedMessageTrigger, setSimulatedMessageTrigger] = useState(0);
-  const [gitBranch, setGitBranch] = useState('main');
-  const [showBranchModal, setShowBranchModal] = useState(false);
-  const [branchInput, setBranchInput] = useState('');
-  const [showDeployModal, setShowDeployModal] = useState(false);
-  const [deployStatus, setDeployStatus] = useState<'idle' | 'started' | 'success'>('idle');
-  const [toasts, setToasts] = useState<{ id: string; message: string }[]>([]);
-
-  const showToast = (message: string) => {
-    const id = Math.random().toString(36).substring(2, 9);
-    setToasts((t) => [...t, { id, message }]);
-    setTimeout(() => {
-      setToasts((t) => t.filter((x) => x.id !== id));
-    }, 4000);
-  };
 
   const handleAskAISim = () => {
     setRightPanelOpen(true);
@@ -86,38 +70,10 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
     setSimulatedMessageTrigger((prev) => prev + 1);
   };
 
-  const handleOpenPRSim = () => {
-    setRightPanelOpen(true);
-    setActiveAITab('review');
-  };
-
-  const handleDeploySim = () => {
-    setShowDeployModal(true);
-    setDeployStatus('started');
-    
-    setTimeout(() => {
-      setDeployStatus('success');
-      
-      setTimeout(() => {
-        setShowDeployModal(false);
-        showToast('Deployment successful ✅ - Production build is live!');
-      }, 1500);
-    }, 2000);
-  };
-
-  const handleCreateBranch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (branchInput.trim()) {
-      setGitBranch(branchInput.trim());
-      showToast(`Switched to new branch: ${branchInput.trim()} 🌿`);
-    }
-    setBranchInput('');
-    setShowBranchModal(false);
-  };
-
   useEffect(() => {
     const handleResize = () => {
       const isSmall = window.innerWidth < 1025; // xl breakpoint
+      const isMobile = window.innerWidth < 768; // md breakpoint
       setIsMobileOrTablet(isSmall);
       setLeftPanelOpen(!isSmall);
       setRightPanelOpen(window.innerWidth >= 1367); // 2xl breakpoint
@@ -132,12 +88,14 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [runOutput, setRunOutput] = useState('');
+  const [isRunning, setIsRunning] = useState(false);
   const [currentFile, setCurrentFile] = useState<FileType | null>(null);
   const [projectFiles, setProjectFiles] = useState<FileType[]>([]);
   const [remoteCursors, setRemoteCursors] = useState<RemoteCursor[]>([]);
   const [cursorLine, setCursorLine] = useState(1);
   const [cursorColumn, setCursorColumn] = useState(1);
-  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const { user } = useAuth();
 
@@ -153,7 +111,6 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
   useEffect(() => {
     const handleSaveEvent = () => {
       saveFileContent(editorValueRef.current);
-      showToast('Saved file changes! 💾');
     };
     const handleCommandPaletteEvent = () => {
       onCommand();
@@ -182,13 +139,15 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
 
   
   useEffect(() => {
-    if (projectId) {
-      const unsubscribe = firestoreService.subscribeToProjectFiles(projectId, (files) => {
-        setProjectFiles(files);
-      });
+    if (!projectId) return;
+
+    if (user?.uid) {
+      const unsubscribe = firestoreService.subscribeToProjectFiles(projectId, setProjectFiles);
       return () => unsubscribe();
     }
-  }, [projectId]);
+
+    return demoStorage.subscribeToProjectFiles(projectId, setProjectFiles);
+  }, [projectId, user?.uid]);
 
   
   useEffect(() => {
@@ -199,21 +158,18 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
 
   
   useEffect(() => {
-    if (projectId) {
-      const uid = user?.uid || 'guest-user';
-      const name = user?.displayName || user?.email || 'Guest Developer';
-      socketService.connect(uid, name);
-      socketService.joinProject(projectId);
-      return () => {
-        socketService.disconnect();
-      };
-    }
-  }, [user, projectId]);
+    if (!projectId || !user?.uid) return;
+    socketService.connect(user.uid, user.displayName || user.email || 'User');
+    socketService.joinProject(projectId);
+    return () => {
+      socketService.disconnect();
+    };
+  }, [user?.uid, projectId]);
 
   
   useEffect(() => {
-    const activeUserId = user?.uid || 'guest-user';
-    if (projectId && currentFile?.id) {
+    const activeUserId = user?.uid;
+    if (projectId && currentFile?.id && activeUserId) {
       const activeFileId = currentFile.id;
       socketService.joinFile(activeFileId);
 
@@ -313,36 +269,55 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
 
   const handleNewTab = () => {
     if (!projectId) return;
+
     const newFileName = `untitled_${Math.floor(Math.random() * 1000)}.ts`;
-    
     setLoading(true);
-    firestoreService.createFile({
-      projectId,
-      name: newFileName,
-      content: '',
-      language: 'typescript',
-      path: `/${newFileName}`,
-      modified: false
-    }).then((fileId) => {
-      loadFileContent(fileId);
-    }).catch((err) => {
+
+    try {
+      if (user?.uid) {
+        firestoreService.createFile({
+          projectId,
+          name: newFileName,
+          content: '',
+          language: 'typescript',
+          path: `/${newFileName}`,
+          modified: false
+        }).then((fileId) => {
+          loadFileContent(fileId);
+        }).catch((err) => {
+          console.error('Failed to create file via new tab:', err);
+          setLoading(false);
+        });
+      } else {
+        const fileId = demoStorage.createFile({
+          projectId,
+          name: newFileName,
+          content: '',
+          language: 'typescript',
+          path: `/${newFileName}`,
+          modified: false
+        });
+        loadFileContent(fileId);
+      }
+    } catch (err) {
       console.error('Failed to create file via new tab:', err);
       setLoading(false);
-    });
+    }
   };
 
   const loadFileContent = async (fileId: string) => {
     setLoading(true);
     setError(null);
     try {
-      const file = await firestoreService.getFile(fileId);
+      const file = user?.uid
+        ? await firestoreService.getFile(fileId)
+        : demoStorage.getFile(fileId);
+
       if (file) {
         const localDraft = localStorage.getItem(`lumen_draft_${fileId}`);
         const finalContent = localDraft !== null ? localDraft : file.content;
-        
         setCurrentFile(file);
         setEditorValue(finalContent);
-        
         setTabs((prev) => {
           const existingTab = prev.find((t) => t.id === fileId);
           if (existingTab) {
@@ -356,7 +331,6 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
         setActiveTabId(fileId);
       }
     } catch (err) {
-      // Offline fallback: try to load from local storage
       const localDraft = localStorage.getItem(`lumen_draft_${fileId}`);
       if (localDraft !== null) {
         setError('Offline: Loaded local cache');
@@ -410,20 +384,89 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
   };
 
   const saveFileContent = async (content: string) => {
-    if (!currentFile || !content) return;
+    if (!currentFile) return;
+
     setSaving(true);
     setError(null);
+
     try {
       localStorage.setItem(`lumen_draft_${currentFile.id}`, content);
-      await firestoreService.updateFile(currentFile.id, { content, modified: true });
-      
-      socketService.broadcastFileUpdate(content);
-      setTabs((prev) => prev.map((t) => ({ ...t, modified: t.id === activeTabId ? false : t.modified })));
+
+      if (user?.uid) {
+        await firestoreService.updateFile(currentFile.id, { content, modified: true });
+        socketService.broadcastFileUpdate(content);
+
+        await firestoreService.logActivity({
+          userId: user.uid,
+          userName: user.displayName || user.email || 'User',
+          action: 'file_updated',
+          message: `Updated file: ${currentFile.name}`,
+          projectName: projectId
+        });
+      } else {
+        demoStorage.updateFile(currentFile.id, {
+          content,
+          modified: true
+        });
+
+        demoStorage.logActivity({
+          userId: 'demo-user',
+          userName: 'Demo User',
+          action: 'file_updated',
+          message: `Updated file: ${currentFile.name}`,
+          projectName: projectId
+        });
+      }
+
+      setTabs((prev) =>
+        prev.map((t) => ({
+          ...t,
+          modified: t.id === activeTabId ? false : t.modified
+        }))
+      );
     } catch (err) {
-      setError('Offline: Saved locally');
-      console.warn('Network failure. Saved draft locally:', err);
+      setError('Saved locally');
+      console.warn('Save failed. Draft kept locally:', err);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRun = async () => {
+    if (!currentFile) {
+      setRunOutput('No file is open.');
+      return;
+    }
+
+    setIsRunning(true);
+    setRunOutput('Running...');
+
+    try {
+      const language =
+        activeTab?.language?.toLowerCase() ||
+        currentFile.language?.toLowerCase() ||
+        'javascript';
+
+      const result = await pistonService.executeCode(
+        language,
+        editorValue
+      );
+
+      if (result.error) {
+        setRunOutput(`Error: ${result.error}`);
+      } else if (result.stderr) {
+        setRunOutput(result.stderr);
+      } else {
+        setRunOutput(
+          result.stdout || 'Program finished successfully.'
+        );
+      }
+    } catch (err: any) {
+      setRunOutput(
+        err?.message || 'Failed to run code.'
+      );
+    } finally {
+      setIsRunning(false);
     }
   };
 
@@ -456,14 +499,14 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
     return (
       <div className="flex flex-col h-screen overflow-hidden bg-background text-foreground">
         {/* Top Header */}
-        <div className="h-12 flex items-center gap-2 px-3 border-b border-white/5 bg-background-soft/50 backdrop-blur-xl shrink-0">
+        <div className="h-12 flex items-center gap-2 px-3 border-b border-border/40 bg-background-soft/80 backdrop-blur-xl shrink-0">
           <button
             onClick={onBack}
             className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             <Logo size={20} />
           </button>
-          <Separator orientation="vertical" className="h-4 bg-white/5 mx-1" />
+          <Separator orientation="vertical" className="h-4 bg-border/40 mx-1" />
           <button
             onClick={onBack}
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors max-w-[120px]"
@@ -472,7 +515,7 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
           </button>
           <div className="ml-auto flex items-center gap-2">
             {error && (
-              <div className="text-[10px] text-red-400 bg-red-400/10 border border-red-400/20 rounded px-1.5 py-0.5">
+              <div className="text-[10px] text-red-600 bg-red-100 border border-red-200 rounded px-1.5 py-0.5">
                 Err
               </div>
             )}
@@ -486,39 +529,27 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
             <div className="hidden sm:flex items-center gap-1.5">
               <button
                 onClick={handleAskAISim}
-                className="h-7 px-2.5 border border-white/5 bg-background-soft hover:bg-[#e9dcf8] hover:text-[#18181b] hover:border-[#18181b] text-[10px] font-mono font-bold rounded flex items-center gap-1 transition-all text-muted-foreground hover:shadow-[1.5px_1.5px_0px_0px_#18181b]"
+                className="h-7 px-2.5 border border-border/40 bg-background-soft hover:bg-primary hover:text-foreground hover:border-primary text-[10px] font-mono font-bold rounded flex items-center gap-1 transition-all text-muted-foreground hover:shadow-sm"
               >
                 <Sparkles className="h-3 w-3" />
                 Ask AI
               </button>
-              <button
-                onClick={handleOpenPRSim}
-                className="h-7 px-2.5 border border-white/5 bg-background-soft hover:bg-[#e9dcf8] hover:text-[#18181b] hover:border-[#18181b] text-[10px] font-mono font-bold rounded flex items-center gap-1 transition-all text-muted-foreground hover:shadow-[1.5px_1.5px_0px_0px_#18181b]"
-              >
-                <GitPullRequest className="h-3 w-3" />
-                Open PR
-              </button>
-              <button
-                onClick={handleDeploySim}
-                className="h-7 px-2.5 border border-white/5 bg-background-soft hover:bg-[#e9dcf8] hover:text-[#18181b] hover:border-[#18181b] text-[10px] font-mono font-bold rounded flex items-center gap-1 transition-all text-muted-foreground hover:shadow-[1.5px_1.5px_0px_0px_#18181b]"
-              >
-                <Globe className="h-3 w-3" />
-                Deploy
-              </button>
-              <button
-                onClick={() => setShowBranchModal(true)}
-                className="h-7 px-2.5 border border-white/5 bg-background-soft hover:bg-[#e9dcf8] hover:text-[#18181b] hover:border-[#18181b] text-[10px] font-mono font-bold rounded flex items-center gap-1 transition-all text-muted-foreground hover:shadow-[1.5px_1.5px_0px_0px_#18181b]"
-              >
-                <GitBranch className="h-3 w-3" />
-                Branch
-              </button>
             </div>
 
             <CollaboratorAvatars isMobile />
-            <Separator orientation="vertical" className="h-4 bg-white/5 mx-1" />
+            <Separator orientation="vertical" className="h-4 bg-border/40 mx-1" />
             <NotificationsPanel />
-            <Button size="sm" className="h-7 px-2 bg-foreground text-background hover:bg-foreground/90 text-xs font-mono font-bold">
-              <Play className="h-3 w-3" />
+            <Button
+              size="sm"
+              onClick={handleRun}
+              disabled={isRunning || !currentFile}
+              className="h-7 px-2 bg-primary text-foreground hover:bg-primary/90 text-xs font-mono font-bold"
+            >
+              {isRunning ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Play className="h-3 w-3" />
+              )}
             </Button>
           </div>
         </div>
@@ -539,14 +570,14 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
                   animate={{ opacity: 0.5 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setLeftPanelOpen(false)}
-                  className="absolute inset-0 bg-black z-20 cursor-pointer"
+                  className="absolute inset-0 bg-foreground/20 z-20 cursor-pointer"
                 />
                 <motion.div
                   initial={{ x: -280, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: -280, opacity: 0 }}
                   transition={{ duration: 0.2, ease }}
-                  className="absolute left-12 top-0 bottom-0 z-30 w-72 bg-zinc-950 border-r border-white/5 flex flex-col"
+                  className="absolute left-12 top-0 bottom-0 z-30 w-72 max-w-[85vw] bg-card border-r border-border/40 flex flex-col shadow-lg"
                 >
                   <SidePanel 
                     panel={activePanel} 
@@ -576,18 +607,18 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
             />
             <div className="flex-1 relative overflow-hidden">
               {loading ? (
-                <div className="absolute inset-0 bg-[#0a0a0f] z-10 p-6 space-y-4">
+                <div className="absolute inset-0 bg-background-soft z-10 p-6 space-y-4">
                   <div className="shimmer absolute inset-0" />
-                  <div className="h-4 w-1/4 rounded bg-white/5" />
+                  <div className="h-4 w-1/4 rounded bg-border/30" />
                   <div className="space-y-2">
-                    <div className="h-4 w-3/4 rounded bg-white/5" />
-                    <div className="h-4 w-1/2 rounded bg-white/5" />
+                    <div className="h-4 w-3/4 rounded bg-border/30" />
+                    <div className="h-4 w-1/2 rounded bg-border/30" />
                   </div>
                 </div>
               ) : !currentFile ? (
-                <div className="flex flex-col items-center justify-center h-full text-center p-6 bg-background-soft/10">
+                <div className="flex flex-col items-center justify-center h-full text-center p-6 bg-background-soft/30">
                   <div className="relative mb-4">
-                    <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                    <div className="h-14 w-14 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
                       <FileCode2 className="h-5 w-5 text-primary" />
                     </div>
                   </div>
@@ -610,24 +641,26 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
             </div>
 
             {/* Terminal area */}
-            <div className="h-28 border-t border-white/5 bg-background-soft/40 flex flex-col">
-              <div className="h-7 flex items-center gap-3 px-3 border-b border-white/5 text-[10px]">
+            <div className="h-24 sm:h-28 border-t border-border/40 bg-background-soft/60 flex flex-col">
+              <div className="h-6 sm:h-7 flex items-center gap-2 sm:gap-3 px-2 sm:px-3 border-b border-border/40 text-[9px] sm:text-[10px]">
                 <span className="flex items-center gap-1 text-foreground font-semibold">
-                  <SquareTerminal className="h-3 w-3" />
-                  Terminal
+                  <SquareTerminal className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                  <span className="hidden xs:inline">Terminal</span>
+                  <span className="xs:inline">Term</span>
                 </span>
                 <div className="ml-auto flex items-center gap-1">
-                  <button onClick={() => setLeftPanelOpen(false)} className="h-5 w-5 flex items-center justify-center rounded hover:bg-white/5">
-                    <X className="h-3 w-3 text-muted-foreground" />
+                  <button onClick={() => setLeftPanelOpen(false)} className="h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center rounded hover:bg-border/20">
+                    <X className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-muted-foreground" />
                   </button>
                 </div>
               </div>
-              <div className="flex-1 font-mono text-[10px] px-3 py-1.5 overflow-auto thin-scrollbar">
+              <div className="flex-1 font-mono text-[9px] sm:text-[10px] px-2 sm:px-3 py-1 sm:py-1.5 overflow-auto thin-scrollbar">
                 <div className="text-muted-foreground">
-                  <span className="text-emerald-400">➜</span> atlas-engine git:(main) npm run dev
+                  <span className="text-green-600">➜</span> <span className="hidden xs:inline">atlas-engine git:(main) npm run dev</span>
+                  <span className="xs:inline">npm run dev</span>
                 </div>
                 <div className="text-muted-foreground/70 mt-0.5">
-                  <span className="text-teal-400">✓</span> Ready on http://localhost:5173
+                  <span className="text-teal-600">✓</span> Ready on http://localhost:5173
                 </div>
               </div>
             </div>
@@ -642,18 +675,18 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
                   animate={{ opacity: 0.5 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setRightPanelOpen(false)}
-                  className="absolute inset-0 bg-black z-20 cursor-pointer"
+                  className="absolute inset-0 bg-foreground/20 z-20 cursor-pointer"
                 />
                 <motion.div
                   initial={{ x: 320, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: 320, opacity: 0 }}
                   transition={{ duration: 0.2, ease }}
-                  className="absolute right-0 top-0 bottom-0 z-30 w-80 bg-[#0c0d12] border-l border-white/5 flex flex-col"
+                  className="absolute right-0 top-0 bottom-0 z-30 w-80 max-w-[90vw] bg-card border-l border-border/40 flex flex-col shadow-lg"
                 >
-                  <div className="flex items-center justify-between p-3 border-b border-white/5 bg-background-soft/30">
+                  <div className="flex items-center justify-between p-3 border-b border-border/40 bg-background-soft/60">
                     <span className="text-xs font-semibold text-foreground uppercase tracking-wider font-mono">AI Companion</span>
-                    <button onClick={() => setRightPanelOpen(false)} className="p-1 rounded hover:bg-white/5">
+                    <button onClick={() => setRightPanelOpen(false)} className="p-1 rounded hover:bg-border/20">
                       <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                     </button>
                   </div>
@@ -678,106 +711,12 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
           column={cursorColumn}
           encoding="UTF-8"
           language={activeTab?.language || 'TypeScript'}
-          gitBranch={gitBranch}
+          gitBranch="main"
           gitStatus={{ added: 0, modified: currentFile?.modified ? 1 : 0, deleted: 0 }}
           collaborators={remoteCursors.length + 1}
           onToggleShortcuts={() => setShortcutsOpen(true)}
         />
         <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
-
-        {/* New Branch Modal */}
-        <AnimatePresence>
-          {showBranchModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.98, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.98, y: 10 }}
-                className="bg-[#faf8f5] border-2 border-[#18181b] p-6 w-full max-w-sm shadow-[6px_6px_0px_0px_#18181b]"
-              >
-                <h3 className="font-serif text-lg font-bold text-[#18181b] mb-4">Create New Git Branch</h3>
-                <form onSubmit={handleCreateBranch} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-bold">Branch Name</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. feature/new-ui"
-                      value={branchInput}
-                      onChange={(e) => setBranchInput(e.target.value)}
-                      className="w-full h-9 px-3 border-2 border-[#18181b] bg-white text-[#18181b] font-mono text-xs focus:outline-none focus:ring-1 focus:ring-[#e9dcf8]"
-                      autoFocus
-                      required
-                    />
-                  </div>
-                  <div className="flex gap-2 justify-end pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowBranchModal(false)}
-                      className="px-3 py-1.5 border-2 border-[#18181b] bg-white text-[#18181b] font-mono text-[10px] font-bold uppercase"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-3 py-1.5 bg-[#e9dcf8] text-[#18181b] border-2 border-[#18181b] font-mono text-[10px] font-bold uppercase shadow-[2px_2px_0px_0px_#18181b]"
-                    >
-                      Create
-                    </button>
-                  </div>
-                </form>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-
-        {/* Deploy Modal */}
-        <AnimatePresence>
-          {showDeployModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.98, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.98, y: 10 }}
-                className="bg-[#faf8f5] border-2 border-[#18181b] p-6 w-full max-w-sm shadow-[6px_6px_0px_0px_#18181b] text-center"
-              >
-                <h3 className="font-serif text-xl font-bold text-[#18181b] mb-4">Deployment Status</h3>
-                <div className="py-6 flex flex-col items-center justify-center space-y-4">
-                  {deployStatus === 'started' ? (
-                    <>
-                      <Loader2 className="h-10 w-10 text-[#18181b] animate-spin" />
-                      <p className="font-mono text-xs text-zinc-600 animate-pulse">Deployment started... uploading build chunks</p>
-                    </>
-                  ) : (
-                    <>
-                      <div className="h-12 w-12 rounded-full bg-emerald-100 border-2 border-emerald-500 flex items-center justify-center text-emerald-600 font-bold text-xl mx-auto">
-                        ✓
-                      </div>
-                      <p className="font-serif text-base font-bold text-[#18181b]">Deployment successful ✅</p>
-                      <p className="font-mono text-[10px] text-zinc-500">Live preview update is processing globally.</p>
-                    </>
-                  )}
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-
-        {/* Toast Notifications Container */}
-        <div className="fixed bottom-10 right-5 z-[60] flex flex-col gap-2 max-w-sm pointer-events-none">
-          <AnimatePresence>
-            {toasts.map((t) => (
-              <motion.div
-                key={t.id}
-                initial={{ opacity: 0, x: 50, scale: 0.9 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 50, scale: 0.9 }}
-                className="bg-white border-2 border-[#18181b] p-4 shadow-[4px_4px_0px_0px_#18181b] rounded-lg pointer-events-auto"
-              >
-                <p className="font-mono text-xs text-[#18181b] font-bold">{t.message}</p>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
 
       </div>
     );
@@ -786,75 +725,70 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background">
       {/* Top Header */}
-      <div className="h-12 flex items-center gap-3 px-3 border-b border-white/5 bg-background-soft/50 backdrop-blur-xl">
+      <div className="h-10 sm:h-12 flex items-center gap-2 sm:gap-3 px-2 sm:px-3 border-b border-border/40 bg-background-soft/80 backdrop-blur-xl">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          <Logo size={22} />
+          <Logo size={18} className="sm:size-22" />
         </button>
-        <Separator orientation="vertical" className="h-5 bg-white/5" />
+        <Separator orientation="vertical" className="h-4 sm:h-5 bg-border/40" />
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-muted-foreground hover:text-foreground transition-colors truncate max-w-[150px] sm:max-w-none"
         >
-          <span>atlas-engine</span>
-          <ChevronRight className="h-3 w-3" />
-          <span>engine</span>
-          <ChevronRight className="h-3 w-3" />
-          <span className="text-foreground font-medium font-serif">{activeTab?.name}</span>
+          <span className="hidden xs:inline">atlas-engine</span>
+          <span className="xs:hidden">atlas</span>
+          <ChevronRight className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+          <span className="hidden xs:inline">engine</span>
+          <span className="xs:inline">eng</span>
+          <ChevronRight className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+          <span className="text-foreground font-medium font-serif truncate">{activeTab?.name}</span>
         </button>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
           {error && (
-            <div className="text-xs text-red-400 bg-red-400/10 border border-red-400/20 rounded px-2 py-1">
+            <div className="text-[10px] sm:text-xs text-red-600 bg-red-100 border border-red-200 rounded px-1.5 sm:px-2 py-0.5 sm:py-1">
               {error}
             </div>
           )}
           {saving && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              Saving...
+            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground">
+              <Loader2 className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-spin" />
+              <span className="hidden xs:inline">Saving...</span>
+              <span className="xs:inline">...</span>
             </div>
           )}
 
           {/* Action Simulator buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={handleAskAISim}
-              className="h-8 px-3 border border-white/5 bg-background-soft hover:bg-[#e9dcf8] hover:text-[#18181b] hover:border-[#18181b] text-xs font-mono font-bold rounded-lg flex items-center gap-1.5 transition-all text-muted-foreground hover:shadow-[2px_2px_0px_0px_#18181b]"
+              className="h-7 sm:h-8 px-2 sm:px-3 border border-border/40 bg-background-soft hover:bg-primary hover:text-foreground hover:border-primary text-[10px] sm:text-xs font-mono font-bold rounded-lg flex items-center gap-1 sm:gap-1.5 transition-all text-muted-foreground hover:shadow-sm"
             >
-              <Sparkles className="h-3.5 w-3.5" />
-              Ask AI
-            </button>
-            <button
-              onClick={handleOpenPRSim}
-              className="h-8 px-3 border border-white/5 bg-background-soft hover:bg-[#e9dcf8] hover:text-[#18181b] hover:border-[#18181b] text-xs font-mono font-bold rounded-lg flex items-center gap-1.5 transition-all text-muted-foreground hover:shadow-[2px_2px_0px_0px_#18181b]"
-            >
-              <GitPullRequest className="h-3.5 w-3.5" />
-              Open PR
-            </button>
-            <button
-              onClick={handleDeploySim}
-              className="h-8 px-3 border border-white/5 bg-background-soft hover:bg-[#e9dcf8] hover:text-[#18181b] hover:border-[#18181b] text-xs font-mono font-bold rounded-lg flex items-center gap-1.5 transition-all text-muted-foreground hover:shadow-[2px_2px_0px_0px_#18181b]"
-            >
-              <Globe className="h-3.5 w-3.5" />
-              Deploy
-            </button>
-            <button
-              onClick={() => setShowBranchModal(true)}
-              className="h-8 px-3 border border-white/5 bg-background-soft hover:bg-[#e9dcf8] hover:text-[#18181b] hover:border-[#18181b] text-xs font-mono font-bold rounded-lg flex items-center gap-1.5 transition-all text-muted-foreground hover:shadow-[2px_2px_0px_0px_#18181b]"
-            >
-              <GitBranch className="h-3.5 w-3.5" />
-              Branch
+              <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <span className="hidden xs:inline">Ask AI</span>
+              <span className="xs:inline">AI</span>
             </button>
           </div>
 
-          <CollaboratorAvatars />
-          <Separator orientation="vertical" className="h-5 bg-white/5" />
+          <div className="hidden sm:block">
+            <CollaboratorAvatars />
+          </div>
+          <Separator orientation="vertical" className="h-4 sm:h-5 bg-border/40 hidden sm:block" />
           <NotificationsPanel />
-          <Button size="sm" className="h-8 bg-foreground text-background hover:bg-foreground/90 font-mono font-bold text-xs uppercase shadow-[2px_2px_0px_0px_rgba(255,255,255,0.15)]">
-            <Play className="h-3.5 w-3.5 mr-1" />
-            Run
+          <Button
+            size="sm"
+            onClick={handleRun}
+            disabled={isRunning || !currentFile}
+            className="h-7 sm:h-8 bg-primary text-foreground hover:bg-primary/90 font-mono font-bold text-[10px] sm:text-xs uppercase shadow-sm"
+          >
+            {isRunning ? (
+              <Loader2 className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 mr-1 animate-spin" />
+            ) : (
+              <Play className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 mr-1" />
+            )}
+            <span className="hidden xs:inline">{isRunning ? 'Running...' : 'Run'}</span>
+            <span className="xs:inline">{isRunning ? '...' : '▶'}</span>
           </Button>
         </div>
       </div>
@@ -863,7 +797,78 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
       <div className="flex-1 flex min-h-0">
         <ActivityBar activePanel={activePanel} onPanelChange={setActivePanel} />
 
-        <ResizablePanelGroup direction="horizontal" className="flex-1">
+        {/* Mobile-only simple layout */}
+        <div className="flex-1 flex flex-col md:hidden">
+          <div className="flex flex-col h-full bg-background min-w-0">
+            <EditorTabs
+              tabs={tabs}
+              onTabChange={handleTabChange}
+              onTabClose={handleTabClose}
+              onNewTab={handleNewTab}
+              onToggleLeftPanel={() => setLeftPanelOpen(!leftPanelOpen)}
+              onToggleRightPanel={() => setRightPanelOpen(!rightPanelOpen)}
+            />
+
+            <div className="flex-1 relative overflow-hidden">
+              {loading ? (
+                <div className="absolute inset-0 bg-background-soft z-10 p-4 space-y-3">
+                  <div className="shimmer absolute inset-0" />
+                  <div className="h-3 w-1/4 rounded bg-border/30" />
+                  <div className="space-y-2">
+                    <div className="h-3 w-3/4 rounded bg-border/30" />
+                    <div className="h-3 w-1/2 rounded bg-border/30" />
+                  </div>
+                </div>
+              ) : !currentFile ? (
+                <div className="flex flex-col items-center justify-center h-full text-center p-4 bg-background-soft/30">
+                  <div className="relative mb-3">
+                    <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
+                      <FileCode2 className="h-5 w-5 text-primary" />
+                    </div>
+                  </div>
+                  <h3 className="text-sm font-medium text-foreground/80">No active file open</h3>
+                  <p className="text-[10px] text-muted-foreground mt-1 max-w-xs leading-relaxed">
+                    Select a file from the explorer sidebar.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <MonacoEditor
+                    value={editorValue}
+                    onChange={handleEditorChange}
+                    onMount={handleEditorMount}
+                    language={activeTab?.language || 'typescript'}
+                    theme={userTheme}
+                    fontFamily={userFont}
+                    keybindings={userKeybindings}
+                  />
+                  <CollaboratorCursors cursors={remoteCursors} />
+                </>
+              )}
+            </div>
+
+            {/* Mobile Terminal */}
+            <div className="h-20 border-t border-border/40 bg-background-soft/60 flex flex-col">
+              <div className="h-6 flex items-center gap-2 px-2 border-b border-border/40 text-[9px]">
+                <span className="flex items-center gap-1 text-foreground">
+                  <SquareTerminal className="h-2.5 w-2.5" />
+                  Terminal
+                </span>
+              </div>
+              <div className="flex-1 font-mono text-[9px] px-2 py-1 overflow-auto thin-scrollbar">
+                <div className="text-muted-foreground">
+                  <span className="text-green-600">➜</span> npm run dev
+                </div>
+                <div className="text-muted-foreground/70 mt-0.5">
+                  <span className="text-teal-600">✓</span> Ready
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop resizable layout */}
+        <ResizablePanelGroup direction="horizontal" className="flex-1 hidden md:flex">
           {/* Left Panel */}
           <ResizablePanel
             defaultSize={18}
@@ -881,15 +886,22 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
                   animate={{ opacity: 1, width: 'auto' }}
                   exit={{ opacity: 0, width: 0 }}
                   transition={{ duration: 0.2, ease }}
-                  className="h-full bg-background-soft/20 border-r border-white/5"
+                  className="h-full bg-background-soft/60 border-r border-border/40"
                 >
-                  <SidePanel panel={activePanel} onBack={onBack} projectFiles={projectFiles} onFileSelect={loadFileContent} projectId={projectId} activeFileId={currentFile?.id} />
+                  <SidePanel 
+                    panel={activePanel} 
+                    onBack={onBack} 
+                    projectFiles={projectFiles} 
+                    onFileSelect={loadFileContent} 
+                    projectId={projectId} 
+                    activeFileId={currentFile?.id} 
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
           </ResizablePanel>
 
-          <ResizableHandle className="bg-white/5 hover:bg-primary/30 transition-colors w-px" />
+          <ResizableHandle className="bg-border/40 hover:bg-primary/40 transition-colors w-px" />
 
           {/* Editor Center */}
           <ResizablePanel defaultSize={54} minSize={30}>
@@ -905,25 +917,25 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
 
               <div className="flex-1 relative overflow-hidden">
                 {loading ? (
-                  <div className="absolute inset-0 bg-[#0a0a0f] z-10 p-6 space-y-4">
+                  <div className="absolute inset-0 bg-background-soft z-10 p-6 space-y-4">
                     <div className="shimmer absolute inset-0" />
-                    <div className="h-4 w-1/4 rounded bg-white/5" />
+                    <div className="h-4 w-1/4 rounded bg-border/30" />
                     <div className="space-y-2">
-                      <div className="h-4 w-3/4 rounded bg-white/5" />
-                      <div className="h-4 w-1/2 rounded bg-white/5" />
-                      <div className="h-4 w-5/6 rounded bg-white/5" />
-                      <div className="h-4 w-2/3 rounded bg-white/5" />
+                      <div className="h-4 w-3/4 rounded bg-border/30" />
+                      <div className="h-4 w-1/2 rounded bg-border/30" />
+                      <div className="h-4 w-5/6 rounded bg-border/30" />
+                      <div className="h-4 w-2/3 rounded bg-border/30" />
                     </div>
-                    <div className="h-4 w-1/3 rounded bg-white/5 pt-4" />
+                    <div className="h-4 w-1/3 rounded bg-border/30 pt-4" />
                     <div className="space-y-2">
-                      <div className="h-4 w-4/5 rounded bg-white/5" />
-                      <div className="h-4 w-3/5 rounded bg-white/5" />
+                      <div className="h-4 w-4/5 rounded bg-border/30" />
+                      <div className="h-4 w-3/5 rounded bg-border/30" />
                     </div>
                   </div>
                 ) : !currentFile ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center p-6 bg-background-soft/10">
+                  <div className="flex flex-col items-center justify-center h-full text-center p-6 bg-background-soft/30">
                     <div className="relative mb-4">
-                      <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                      <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
                         <FileCode2 className="h-6 w-6 text-primary" />
                       </div>
                       <div className="absolute inset-0 rounded-full blur bg-primary/20 opacity-40 animate-pulse-glow" />
@@ -933,17 +945,17 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
                       Select a file from the explorer sidebar or create a new file to start coding.
                     </p>
                     <div className="mt-6 space-y-2 max-w-xs w-full">
-                      <div className="flex items-center gap-6 justify-between text-xs text-muted-foreground/60 border-b border-white/5 pb-1.5">
+                      <div className="flex items-center gap-6 justify-between text-xs text-muted-foreground/60 border-b border-border/30 pb-1.5">
                         <span>Open Command Palette</span>
-                        <kbd className="font-mono text-[10px] bg-white/10 px-1.5 py-0.5 rounded">⌘K</kbd>
+                        <kbd className="font-mono text-[10px] bg-border/20 px-1.5 py-0.5 rounded">⌘K</kbd>
                       </div>
-                      <div className="flex items-center gap-6 justify-between text-xs text-muted-foreground/60 border-b border-white/5 pb-1.5">
+                      <div className="flex items-center gap-6 justify-between text-xs text-muted-foreground/60 border-b border-border/30 pb-1.5">
                         <span>Toggle Explorer Panel</span>
-                        <kbd className="font-mono text-[10px] bg-white/10 px-1.5 py-0.5 rounded">⌘B</kbd>
+                        <kbd className="font-mono text-[10px] bg-border/20 px-1.5 py-0.5 rounded">⌘B</kbd>
                       </div>
                       <div className="flex items-center gap-6 justify-between text-xs text-muted-foreground/60">
                         <span>Toggle AI Assistant</span>
-                        <kbd className="font-mono text-[10px] bg-white/10 px-1.5 py-0.5 rounded">⌘⇧A</kbd>
+                        <kbd className="font-mono text-[10px] bg-border/20 px-1.5 py-0.5 rounded">⌘⇧A</kbd>
                       </div>
                     </div>
                   </div>
@@ -964,66 +976,47 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
               </div>
 
               {/* Terminal */}
-              <div className="h-32 border-t border-white/5 bg-background-soft/40 flex flex-col">
-                <div className="h-8 flex items-center gap-4 px-4 border-b border-white/5 text-xs">
-                  <span className="flex items-center gap-1.5 text-foreground">
-                    <SquareTerminal className="h-3.5 w-3.5" />
-                    Terminal
+              <div className="h-28 sm:h-32 border-t border-border/40 bg-background-soft/60 flex flex-col">
+                <div className="h-7 sm:h-8 flex items-center gap-2 sm:gap-4 px-2 sm:px-4 border-b border-border/40 text-[10px] sm:text-xs">
+                  <span className="flex items-center gap-1 sm:gap-1.5 text-foreground">
+                    <SquareTerminal className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                    <span className="hidden xs:inline">Terminal</span>
+                    <span className="xs:inline">Term</span>
                   </span>
-                  <span className="text-muted-foreground hover:text-foreground cursor-pointer">
+                  <span className="hidden sm:inline text-muted-foreground hover:text-foreground cursor-pointer">
                     Problems
                   </span>
-                  <span className="text-muted-foreground hover:text-foreground cursor-pointer">
+                  <span className="hidden sm:inline text-muted-foreground hover:text-foreground cursor-pointer">
                     Output
                   </span>
-                  <span className="text-muted-foreground hover:text-foreground cursor-pointer">
+                  <span className="hidden sm:inline text-muted-foreground hover:text-foreground cursor-pointer">
                     Debug Console
                   </span>
                   <div className="ml-auto flex items-center gap-1">
-                    <button className="h-6 w-6 flex items-center justify-center rounded hover:bg-white/5">
-                      <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+                    <button className="h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center rounded hover:bg-border/20">
+                      <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground" />
                     </button>
-                    <button className="h-6 w-6 flex items-center justify-center rounded hover:bg-white/5">
-                      <X className="h-3.5 w-3.5 text-muted-foreground" />
+                    <button className="h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center rounded hover:bg-border/20">
+                      <X className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground" />
                     </button>
                   </div>
                 </div>
-                <div className="flex-1 font-mono text-xs px-4 py-2 overflow-auto thin-scrollbar">
-                  <div className="text-muted-foreground">
-                    <span className="text-emerald-400">➜</span> atlas-engine{' '}
-                    <span className="text-sky-400">git:(main)</span> npm run dev
-                  </div>
-                  <div className="text-muted-foreground/70 mt-1">
-                    <span className="text-teal-400">✓</span> Compiled successfully in 184ms
-                  </div>
-                  <div className="text-muted-foreground/70">
-                    <span className="text-teal-400">✓</span> Ready on{' '}
-                    <span className="text-sky-300">http://localhost:5173</span>
-                  </div>
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1 }}
-                    className="text-muted-foreground/70"
-                  >
-                    <span className="text-amber-400">⚠</span> 2 collaborators editing
-                    engine/index.ts
-                  </motion.div>
-                  <div className="flex items-center mt-1">
-                    <span className="text-emerald-400">➜</span>
-                    <span className="ml-2 text-muted-foreground/50">_</span>
-                    <motion.span
-                      animate={{ opacity: [1, 0, 1] }}
-                      transition={{ duration: 1, repeat: Infinity }}
-                      className="inline-block w-1.5 h-3.5 bg-muted-foreground/50 ml-0.5"
-                    />
-                  </div>
+                <div className="flex-1 font-mono text-[10px] sm:text-xs px-2 sm:px-4 py-1.5 sm:py-2 overflow-auto thin-scrollbar whitespace-pre-wrap">
+                  {runOutput ? (
+                    <div className="text-foreground">
+                      {runOutput}
+                    </div>
+                  ) : (
+                    <div className="text-muted-foreground/50">
+                      Click Run to execute your code.
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </ResizablePanel>
 
-          <ResizableHandle className="bg-white/5 hover:bg-primary/30 transition-colors w-px" />
+          <ResizableHandle className="bg-border/40 hover:bg-primary/40 transition-colors w-px" />
 
           {/* Right Panel */}
           <ResizablePanel
@@ -1064,7 +1057,7 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
         column={cursorColumn}
         encoding="UTF-8"
         language={activeTab?.language || 'TypeScript'}
-        gitBranch={gitBranch}
+        gitBranch="main"
         gitStatus={{ added: 0, modified: currentFile?.modified ? 1 : 0, deleted: 0 }}
         collaborators={remoteCursors.length + 1}
         onToggleShortcuts={() => setShortcutsOpen(true)}
@@ -1072,106 +1065,16 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
 
       <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
 
-      {/* New Branch Modal */}
-      <AnimatePresence>
-        {showBranchModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.98, y: 10 }}
-              className="bg-[#faf8f5] border-2 border-[#18181b] p-6 w-full max-w-sm shadow-[6px_6px_0px_0px_#18181b]"
-            >
-              <h3 className="font-serif text-lg font-bold text-[#18181b] mb-4">Create New Git Branch</h3>
-              <form onSubmit={handleCreateBranch} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-bold">Branch Name</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. feature/new-ui"
-                    value={branchInput}
-                    onChange={(e) => setBranchInput(e.target.value)}
-                    className="w-full h-9 px-3 border-2 border-[#18181b] bg-white text-[#18181b] font-mono text-xs focus:outline-none focus:ring-1 focus:ring-[#e9dcf8]"
-                    autoFocus
-                    required
-                  />
-                </div>
-                <div className="flex gap-2 justify-end pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowBranchModal(false)}
-                    className="px-3 py-1.5 border-2 border-[#18181b] bg-white text-[#18181b] font-mono text-[10px] font-bold uppercase"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-3 py-1.5 bg-[#e9dcf8] text-[#18181b] border-2 border-[#18181b] font-mono text-[10px] font-bold uppercase shadow-[2px_2px_0px_0px_#18181b]"
-                  >
-                    Create
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Deploy Modal */}
-      <AnimatePresence>
-        {showDeployModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.98, y: 10 }}
-              className="bg-[#faf8f5] border-2 border-[#18181b] p-6 w-full max-w-sm shadow-[6px_6px_0px_0px_#18181b] text-center"
-            >
-              <h3 className="font-serif text-xl font-bold text-[#18181b] mb-4">Deployment Status</h3>
-              <div className="py-6 flex flex-col items-center justify-center space-y-4">
-                {deployStatus === 'started' ? (
-                  <>
-                    <Loader2 className="h-10 w-10 text-[#18181b] animate-spin" />
-                    <p className="font-mono text-xs text-zinc-600 animate-pulse">Deployment started... uploading build chunks</p>
-                  </>
-                ) : (
-                  <>
-                    <div className="h-12 w-12 rounded-full bg-emerald-100 border-2 border-emerald-500 flex items-center justify-center text-emerald-600 font-bold text-xl mx-auto">
-                      ✓
-                    </div>
-                    <p className="font-serif text-base font-bold text-[#18181b]">Deployment successful ✅</p>
-                    <p className="font-mono text-[10px] text-zinc-500">Live preview update is processing globally.</p>
-                  </>
-                )}
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Toast Notifications Container */}
-      <div className="fixed bottom-10 right-5 z-[60] flex flex-col gap-2 max-w-sm pointer-events-none">
-        <AnimatePresence>
-          {toasts.map((t) => (
-            <motion.div
-              key={t.id}
-              initial={{ opacity: 0, x: 50, scale: 0.9 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 50, scale: 0.9 }}
-              className="bg-white border-2 border-[#18181b] p-4 shadow-[4px_4px_0px_0px_#18181b] rounded-lg pointer-events-auto"
-            >
-              <p className="font-mono text-xs text-[#18181b] font-bold">{t.message}</p>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-
     </div>
   );
 }
 
 function CollaboratorAvatars({ isMobile = false }: { isMobile?: boolean }) {
-  const visibleCollabs = isMobile ? collaborators.slice(0, 2) : collaborators;
+  // TODO: Replace with real collaborator data from Socket.io (Phase 10)
+  const placeholderCollabs = [
+    { name: 'You', initials: 'ME', color: '#38bdf8', status: 'active' as const },
+  ];
+  const visibleCollabs = isMobile ? placeholderCollabs.slice(0, 2) : placeholderCollabs;
   return (
     <div className="flex items-center gap-1.5">
       <div className="flex -space-x-2">

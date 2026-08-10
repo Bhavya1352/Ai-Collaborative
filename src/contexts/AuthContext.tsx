@@ -1,6 +1,6 @@
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { 
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
   User,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -10,7 +10,7 @@ import {
   signInWithPopup,
   updateProfile
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { getFirebaseAuth } from '@/lib/firebase';
 
 interface AuthContextType {
   user: User | null;
@@ -30,9 +30,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Initialize Firebase Auth immediately on mount
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    console.log('[AuthContext] Initializing Firebase Auth');
+    const auth = getFirebaseAuth();
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      console.log('[AuthContext] onAuthStateChanged fired — uid:', firebaseUser?.uid ?? 'null');
+      setUser(firebaseUser);
       setLoading(false);
     });
     return unsubscribe;
@@ -41,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     setError(null);
     try {
+      const auth = getFirebaseAuth();
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err: any) {
       setError(err.message || 'Failed to sign in');
@@ -51,10 +56,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, name?: string) => {
     setError(null);
     try {
+      const auth = getFirebaseAuth();
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       if (name && userCredential.user) {
         await updateProfile(userCredential.user, { displayName: name });
-        
+
         setUser({ ...userCredential.user, displayName: name } as User);
       }
     } catch (err: any) {
@@ -66,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithGoogle = async () => {
     setError(null);
     try {
+      const auth = getFirebaseAuth();
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
     } catch (err: any) {
@@ -77,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     setError(null);
     try {
+      const auth = getFirebaseAuth();
       await firebaseSignOut(auth);
     } catch (err: any) {
       setError(err.message || 'Failed to sign out');
@@ -87,15 +95,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearError = () => setError(null);
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading, 
-      error, 
-      signIn, 
-      signUp, 
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      error,
+      signIn,
+      signUp,
       signInWithGoogle,
       signOut,
-      clearError 
+      clearError
     }}>
       {children}
     </AuthContext.Provider>
