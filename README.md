@@ -1,35 +1,76 @@
 # Lumen
 
-Lumen is a collaborative code editor with built-in AI assistance. It supports real-time code editing, AI-powered code generation and review, and cloud synchronization.
+A browser-based coding workspace built with React and TypeScript. It combines a Monaco-based code editor, code execution, file management, and Gemini-powered coding assistance in one interface.
 
 ## Features
 
-* Real-time collaborative editing
-* AI code generation, explanation, review, and fixes
-* Monaco Editor
-* Firebase Authentication
-* Firestore auto-save
-* Offline draft support
-* Folder-based file explorer
+- **Code Editor**
+  - Monaco Editor integration
+  - Syntax highlighting
+  - Multiple files/tabs
+  - Code editing directly in the browser
+
+- **Code Execution**
+  - Run code from the editor
+  - Supports multiple programming languages through the execution server
+  - Displays program output and execution errors
+
+- **AI Assistant**
+  - Explain code
+  - Generate code from a description
+  - Review code for bugs and improvements
+  - Fix code using error information
+  - Refactor existing code
+  - Chat with the AI assistant
+  - Streaming responses for chat and code explanations
+
+- **Project & File Management**
+  - Create and open files
+  - Edit file contents
+  - Save project data
+  - Project-specific file handling
+  - Demo storage using browser localStorage
+
+- **Developer Workspace**
+  - Explorer panel
+  - Editor tabs
+  - Output/terminal area
+  - AI assistant panel
+  - Responsive workspace layout
 
 ## Tech Stack
 
-* React
-* TypeScript
-* Tailwind CSS
-* Monaco Editor
-* Firebase
-* Socket.io
-* Google Gemini API
-* Vite
+### Frontend
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- Monaco Editor
+- Lucide React
+- Framer Motion
 
-## Run Locally
+### APIs & Storage
+- Google Gemini API
+- Piston-based code execution
+- Firebase
+- Browser localStorage for demo data
 
-```bash
-git clone https://github.com/Bhavya1352/Ai-Collaborative.git
-cd Ai-Collaborative
-npm install
-npm run dev
-```
+## Project Structure
 
+```text
+Ai-Collaborative/
+├── src/
+│   ├── components/
+│   │   ├── editor/
+│   │   └── ui/
+│   ├── services/
+│   │   ├── demoStorage.ts
+│   │   ├── gemini.ts
+│   │   └── piston.ts
+│   └── ...
+├── server/
+│   └── index.js
+├── public/
+├── package.json
+└── vite.config.ts
 Create a `.env` file and add your Firebase and Gemini API keys before running the project.
