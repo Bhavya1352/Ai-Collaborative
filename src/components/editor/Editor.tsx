@@ -73,7 +73,6 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
   useEffect(() => {
     const handleResize = () => {
       const isSmall = window.innerWidth < 1025; // xl breakpoint
-      const isMobile = window.innerWidth < 768; // md breakpoint
       setIsMobileOrTablet(isSmall);
       setLeftPanelOpen(!isSmall);
       setRightPanelOpen(window.innerWidth >= 1367); // 2xl breakpoint
