@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import type { Screen } from '@/lib/data';
 import {
   Sparkles,
@@ -63,7 +63,7 @@ const fileSnippets = {
   }
 };
 
-function Nav({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+const Nav = memo(function Nav({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -71,7 +71,7 @@ function Nav({ onNavigate }: { onNavigate: (s: Screen) => void }) {
       <motion.header
         initial={{ y: -8, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease }}
+        transition={{ duration: 0.4, ease }}
         className="fixed top-0 inset-x-0 z-50 px-4 sm:px-6 lg:px-8 py-4 bg-[#faf8f5]/90 backdrop-blur-md border-b-2 border-[#18181b]"
       >
         <div className="mx-auto max-w-6xl flex items-center justify-between">
@@ -126,6 +126,7 @@ function Nav({ onNavigate }: { onNavigate: (s: Screen) => void }) {
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
               className="absolute top-20 left-3 right-3 sm:left-4 sm:right-4 bg-[#faf8f5] border-2 border-[#18181b] shadow-[4px_4px_0px_0px_#18181b] rounded-xl p-4 sm:p-5 flex flex-col gap-3 sm:gap-4 z-40"
             >
               <a href="#demo" onClick={() => setMobileMenuOpen(false)} className="font-mono text-xs sm:text-xs font-bold uppercase tracking-wider text-[#18181b] hover:underline underline-offset-4 decoration-2 py-1">TRY DEMO</a>
@@ -145,10 +146,10 @@ function Nav({ onNavigate }: { onNavigate: (s: Screen) => void }) {
       </motion.header>
     </>
   );
-}
+});
 
 
-function Hero({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+const Hero = memo(function Hero({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   return (
     <section className="relative bg-[#faf8f5] min-h-[85vh] flex flex-col justify-center px-3 sm:px-4 md:px-6 lg:px-8 pt-24 sm:pt-28 md:pt-32 pb-12 sm:pb-16 overflow-hidden">
       <div className="mx-auto max-w-5xl w-full text-center space-y-6 sm:space-y-8 z-10">
@@ -159,7 +160,7 @@ function Hero({ onNavigate }: { onNavigate: (s: Screen) => void }) {
             <span className="xs:hidden">AI WORKSPACE</span>
           </div>
 
-          <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-light tracking-tight text-[#18181b] leading-[1.1] sm:leading-[1.05] font-serif">
+          <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-[#18181b] leading-[1.1] sm:leading-[1.05] font-serif">
             Your code. Your AI. <br />
             <span className="font-serif italic text-zinc-600 font-normal">
               One workspace.
@@ -188,10 +189,9 @@ function Hero({ onNavigate }: { onNavigate: (s: Screen) => void }) {
       </div>
     </section>
   );
-}
+});
 
-// INTERACTIVE SIMULATED IDE DEMO
-function EditorSimulator() {
+const EditorSimulator = memo(function EditorSimulator() {
   const [selectedFile, setSelectedFile] = useState<keyof typeof fileSnippets>('hello.ts');
   const [isRefactored, setIsRefactored] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -327,10 +327,9 @@ function EditorSimulator() {
       </div>
     </section>
   );
-}
+});
 
-// KEY FEATURES PILLARS
-function KeyFeatures() {
+const KeyFeatures = memo(function KeyFeatures() {
   const pillars = [
     { title: '🤖 AI Code Assistant', desc: 'Explain, generate, review, fix and refactor code with AI.' },
     { title: '⌨️ Multi-File Editor', desc: 'Work across files with a familiar browser-based coding workspace.' },
@@ -353,10 +352,9 @@ function KeyFeatures() {
       </div>
     </section>
   );
-}
+});
 
-// RESUME DESCRIPTION CALLOUT
-function ResumeCallout({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+const ResumeCallout = memo(function ResumeCallout({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   return (
     <section className="bg-[#e9dcf8] border-t-2 border-[#18181b] px-3 sm:px-4 md:px-6 lg:px-8 py-12 sm:py-16 md:py-20 text-center relative overflow-hidden">
       <div className="mx-auto max-w-4xl space-y-4 sm:space-y-6 relative z-10 px-2">
@@ -374,9 +372,9 @@ function ResumeCallout({ onNavigate }: { onNavigate: (s: Screen) => void }) {
       </div>
     </section>
   );
-}
+});
 
-function Footer() {
+const Footer = memo(function Footer() {
   return (
     <footer className="bg-[#faf8f5] border-t-2 border-[#18181b] py-6 sm:py-8 px-3 sm:px-4 md:px-6 lg:px-8 font-mono text-[9px] sm:text-[10px] text-[#18181b] font-bold">
       <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
@@ -387,7 +385,7 @@ function Footer() {
       </div>
     </footer>
   );
-}
+});
 
 export function LandingPage({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   return (

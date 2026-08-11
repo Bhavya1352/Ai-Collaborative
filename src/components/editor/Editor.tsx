@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronRight,
@@ -22,8 +22,6 @@ import {
   ResizableHandle,
 } from '@/components/ui/resizable';
 import { ActivityBar, SidePanel, type ActivityPanel } from './ActivityBar';
-import { AISidebar } from './AISidebar';
-import { MonacoEditor } from './MonacoEditor';
 import { EditorTabs } from './EditorTabs';
 import { StatusBar } from './StatusBar';
 import { NotificationsPanel } from './Notifications';
@@ -33,6 +31,19 @@ import { demoStorage } from '@/services/demoStorage';
 import { socketService } from '@/services/socket';
 import { pistonService } from '@/services/piston';
 import { useAuth } from '@/contexts/AuthContext';
+
+// Lazy load heavy components
+const MonacoEditor = lazy(() => import('./MonacoEditor').then(m => ({ default: m.MonacoEditor })));
+const AISidebar = lazy(() => import('./AISidebar').then(m => ({ default: m.AISidebar })));
+
+// Loading fallback for lazy components
+function ComponentLoader() {
+  return (
+    <div className="flex items-center justify-center h-full">
+      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -628,12 +639,14 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
                 </div>
               ) : (
                 <>
-                  <MonacoEditor
-                    value={editorValue}
-                    onChange={handleEditorChange}
-                    onMount={handleEditorMount}
-                    language={activeTab?.language || 'typescript'}
-                  />
+                  <Suspense fallback={<ComponentLoader />}>
+                    <MonacoEditor
+                      value={editorValue}
+                      onChange={handleEditorChange}
+                      onMount={handleEditorMount}
+                      language={activeTab?.language || 'typescript'}
+                    />
+                  </Suspense>
                   <CollaboratorCursors cursors={remoteCursors} />
                 </>
               )}
@@ -832,15 +845,17 @@ export function Editor({ onBack, onCommand, projectId, fileId }: EditorProps) {
                 </div>
               ) : (
                 <>
-                  <MonacoEditor
-                    value={editorValue}
-                    onChange={handleEditorChange}
-                    onMount={handleEditorMount}
-                    language={activeTab?.language || 'typescript'}
-                    theme={userTheme}
-                    fontFamily={userFont}
-                    keybindings={userKeybindings}
-                  />
+                  <Suspense fallback={<ComponentLoader />}>
+                    <MonacoEditor
+                      value={editorValue}
+                      onChange={handleEditorChange}
+                      onMount={handleEditorMount}
+                      language={activeTab?.language || 'typescript'}
+                      theme={userTheme}
+                      fontFamily={userFont}
+                      keybindings={userKeybindings}
+                    />
+                  </Suspense>
                   <CollaboratorCursors cursors={remoteCursors} />
                 </>
               )}
